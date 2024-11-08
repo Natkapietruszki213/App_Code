@@ -14,6 +14,8 @@ function Login() {
     const forgetPasswordClick = () => {
         navigate('/forgetPassword')
     }
+    let data = ""
+    const test = fetch("http://localhost:3000/dogs").then(res => data = res.json())
     return (
         <div className="App">
             <div className="header_log">
@@ -22,7 +24,7 @@ function Login() {
             <div className="page_login">
                 <div className="login_window">
                     <form className="login_form">
-                        <label htmlFor="login">Login</label>
+                        <label htmlFor="login">{data.a}</label>
                         <input id="login" placeholder="Wpisz login:"></input>
                         <label htmlFor="password">Hasło</label>
                         <input id="password" placeholder="Wpisz hasło:"></input>
