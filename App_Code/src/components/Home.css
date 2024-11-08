@@ -1,0 +1,42 @@
+.menu{
+    display: flex;
+    align-items: center;
+    height: 10vh;
+    width:100vw;
+    background-color: #4e2b7f;
+}
+#logo{
+    width:10vw;
+    height:6vh;
+    padding:1vw;
+}
+.menu_buttons{
+    height:10vh;
+    width:22vw;
+    font-size: 20px;
+    background-color: #4e2b7f;
+    color:white;
+    border: none;
+    display: flex;
+    padding: 10px;
+    align-items: center;
+    justify-content: center;
+}
+.menu_buttons:hover{
+
+    border-bottom: 3px solid #ffffff;
+}
+.page{
+    height: 80vh;
+    width:100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #ddc4f5;
+}
+.footer{
+    height: 10vh;
+    width:100vw;  
+    background-color: #4e2b7f;
+}
