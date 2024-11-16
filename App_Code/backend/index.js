@@ -1,16 +1,11 @@
 const express = require('express')
 var cors = require('cors')
 const db = require('./database')
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
-const User = require('./models/User')
-const cookieParser = require("cookie-parser")
-
+const router = express.Router()
 const app = express()
 const port = 3000
 
 app.use(cors());
-app.use(cookieParser());
 app.use(express.json());
 
 app.get('/dogs', (req, res) => {
@@ -25,6 +20,25 @@ app.get('/dogs', (req, res) => {
 });
 });
 
+app.post('/login', (req, res) => {
+    const {name, password } = req.body;
+    db.get('SELECT * FROM users WHERE name = ?', [name], (err, row) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+        if (row) {
+            if (password === row.password) {
+                console.log("Zalogowano pomyślnie:", name);
+            } else {
+                return res.status(401).json({ message: "Niepoprawne hasło"});
+            }
+        } else {
+            return res.status(404).json({ message: "Użytkownik nie istnieje"});
+        }
+    });
+  });
+  
 app.post('/signUp', (req, res) => {
   const {name, surname, email, login, password} = req.body;
   const sql = `INSERT INTO users (name, surname, mail, login, hash_password) VALUES (?, ?, ?, ?, ?)`;

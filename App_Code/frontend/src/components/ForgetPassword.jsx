@@ -6,7 +6,7 @@ function ForgetPassword() {
 
     const navigate = useNavigate();
     const remindPasswordClick = () => {
-        navigate('/');
+        navigate('/login');
     }
     return (
         <div className="App">
