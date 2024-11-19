@@ -21,6 +21,7 @@ app.get('/dogs', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
+    console.log("Request body:", req.body);
     const {name, password } = req.body;
     db.get('SELECT * FROM users WHERE name = ?', [name], (err, row) => {
         if (err) {
@@ -30,6 +31,7 @@ app.post('/login', (req, res) => {
         if (row) {
             if (password === row.password) {
                 console.log("Zalogowano pomyślnie:", name);
+                return res.status(200).json({ message: "Zalogowano pomyślnie" }); 
             } else {
                 return res.status(401).json({ message: "Niepoprawne hasło"});
             }
@@ -41,7 +43,7 @@ app.post('/login', (req, res) => {
   
 app.post('/signUp', (req, res) => {
   const {name, surname, email, login, password} = req.body;
-  const sql = `INSERT INTO users (name, surname, mail, login, hash_password) VALUES (?, ?, ?, ?, ?)`;
+  const sql = `INSERT INTO users (name, surname, mail, login, password) VALUES (?, ?, ?, ?, ?)`;
 
   db.run(sql, [name, surname, email, login, password], function(err) {
     if (err) {
