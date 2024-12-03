@@ -22,6 +22,7 @@ function Login() {
         {
             fetch('http://localhost:3000/login',{
                 method: 'POST',
+                credentials: 'include', 
                 headers:{
                     'Content-Type': 'application/json'
             },
@@ -32,11 +33,12 @@ function Login() {
                     console.log(response);
                     return response.json();
                 } else {
+                    console.log(response);
                     throw new Error('Niepoprawny login lub hasło');
                 }
             })
             .then(data => {
-                alert("Zalogowano pomyślnie: " + data.name);
+                console.log("Zalogowano użytkownika!");
                 navigate('/home');
             })
             .catch(error => {
