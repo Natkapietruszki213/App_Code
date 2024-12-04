@@ -33,33 +33,29 @@ app.use(session({
     }
 }));
 
-app.get('/dogs', (req, res) => {
-  db.all('SELECT * FROM dogs', [], (err, rows) => {
-    if (err) {
-        res.status(400).send({ error: err.message });
-        return;
+function checkSession(req,res,next){
+    if (!req.session || !req.session.users || !req.session.users.user_id) {
+        return res.status(401).json({ message: 'Niezalogowany dostęp zabroniony' });
     }
-    res.status(200).json({
-        users: rows
-    });
-});
-});
+    next();
+}
 
 app.get('/login', (req, res) => {
     res.send('Strona logowania'); 
 });
 
-app.get('/home', (req, res) => {
-    console.log("Ciasteczko connect.sid:", req.cookies['connect.sid']);
-    console.log("Sesja na serwerze:", req.session);
-
-    if (!req.session || !req.session.users || !req.session.users.user_id) {
-        console.log("Brak aktywnej sesji! Odrzucenie dostępu.");
-        return res.status(401).json({ message: 'Niezalogowany dostęp zabroniony' });
-    }
-
+app.get('/home', checkSession, (req, res) => {
     res.send('Strona główna');
 });
+
+app.get('/walks',checkSession,(req,res) =>{
+    res.send('Strona główna');
+});
+
+app.get('/adoptions',checkSession,(req,res) =>{
+    res.send('Strona główna');
+});
+
 
 app.post('/logout', (req, res) => {
     if (req.session) {
@@ -68,10 +64,9 @@ app.post('/logout', (req, res) => {
                 console.error("Błąd podczas niszczenia sesji:", err);
                 return res.status(500).send('Błąd podczas wylogowywania');
             }
-            // Usuwanie ciasteczka connect.sid
             res.clearCookie('connect.sid', {
                 path: '/', // Ścieżka musi odpowiadać konfiguracji ciasteczka
-                httpOnly: true, // Dla bezpieczeństwa
+                httpOnly: true, 
                 secure: false, // False, jeśli używasz HTTP
                 sameSite: 'Lax' // Dopasowanie do konfiguracji
             });
@@ -82,7 +77,6 @@ app.post('/logout', (req, res) => {
         res.status(200).send('Nie zalogowano');
     }
 });
-
 
 app.post('/login', (req, res) => {
     console.log("Request body:", req.body);
@@ -99,8 +93,6 @@ app.post('/login', (req, res) => {
                     name: row.name,
                     surname: row.surname,
                 };
-                console.log('Session cookie set:', req.session.cookie);
-                console.log(req.session)
                 console.log("Zalogowano pomyślnie:", name);
                 return res.status(200).json({ message: "Zalogowano pomyślnie" });
             } else {

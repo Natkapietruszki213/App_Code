@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import './Home.css';
+import './Adoptions.css';
 import logo from "../assets/logo.jpg"
 import { useNavigate } from 'react-router-dom';
 
-function Home() {
-    const [dogs, setDogs] = useState([]);
+function Adoptions() {
     const navigate = useNavigate();
     const [activeButton, setActiveButton] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:3000/home', {
+        fetch('http://localhost:3000/adoptions', {
             method: 'GET',
             credentials: 'include',
         })
@@ -21,7 +20,7 @@ function Home() {
             return response.text(); 
         })
         .catch((error) => {
-            console.error('Błąd przy fetchingu /home:', error);
+            console.error('Błąd przy fetchingu /adoptions:', error);
             navigate('/login');
         });
     }, []);
@@ -51,7 +50,7 @@ function Home() {
     }
 
     return (
-        <div className="home">
+        <div className="adoptions">
             <div className="menu">
             <img src={logo} alt="logo" id="logo" />
                 <button className={`menu_buttons ${activeButton === 'home' ? 'active' : ''}`}
@@ -63,12 +62,7 @@ function Home() {
                 <button className="menu_buttons" id="log_out_button" onClick={logOut}>Wyloguj</button>
             </div>
             <div className="page">
-            <h1>Psiaki w schronisku:</h1>
-                <ul>
-                    {dogs.map(dog => (
-                        <li key={dog.id}>{dog.name} - {dog.weight}</li> 
-                    ))}
-                </ul>
+            
             </div>
             <div className="footer">
 
@@ -76,4 +70,4 @@ function Home() {
         </div>
     )
 }
-export default Home;
+export default Adoptions;

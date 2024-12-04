@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
-import './Home.css';
+import './Walks.css';
 import logo from "../assets/logo.jpg"
 import { useNavigate } from 'react-router-dom';
 
-function Home() {
-    const [dogs, setDogs] = useState([]);
+function Walks() {
     const navigate = useNavigate();
     const [activeButton, setActiveButton] = useState('');
-
     useEffect(() => {
-        fetch('http://localhost:3000/home', {
+        fetch('http://localhost:3000/walks', {
             method: 'GET',
             credentials: 'include',
         })
@@ -21,7 +19,7 @@ function Home() {
             return response.text(); 
         })
         .catch((error) => {
-            console.error('Błąd przy fetchingu /home:', error);
+            console.error('Błąd przy fetchingu /walks:', error);
             navigate('/login');
         });
     }, []);
@@ -30,7 +28,7 @@ function Home() {
         setActiveButton(buttonName);
         navigate(path);
     }
-
+    
     function logOut() {
         console.log('Wylogowanie rozpoczęte');
         fetch('http://localhost:3000/logout', {
@@ -51,9 +49,9 @@ function Home() {
     }
 
     return (
-        <div className="home">
+        <div className="walks">
             <div className="menu">
-            <img src={logo} alt="logo" id="logo" />
+                <img src={logo} alt="logo" id="logo" />
                 <button className={`menu_buttons ${activeButton === 'home' ? 'active' : ''}`}
                     onClick={() => handleNavigation('/home', 'home')}>Psiaki w G4</button>
                 <button  className={`menu_buttons ${activeButton === 'walks' ? 'active' : ''}`}
@@ -63,17 +61,10 @@ function Home() {
                 <button className="menu_buttons" id="log_out_button" onClick={logOut}>Wyloguj</button>
             </div>
             <div className="page">
-            <h1>Psiaki w schronisku:</h1>
-                <ul>
-                    {dogs.map(dog => (
-                        <li key={dog.id}>{dog.name} - {dog.weight}</li> 
-                    ))}
-                </ul>
             </div>
             <div className="footer">
-
             </div>
         </div>
     )
 }
-export default Home;
+export default Walks;
