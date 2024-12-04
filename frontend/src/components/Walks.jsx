@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Walks() {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const year = String(today.getFullYear());
     const month = String(today.getMonth()+1);
     const day = String(today.getDate()); 
@@ -15,7 +16,6 @@ function Walks() {
     const [selectedDogs, setSelectedDogs] = useState(new Set());
 
     useEffect(() => {
-        // Sprawdź autoryzację przez endpoint /walks
         fetch('http://localhost:3000/walks', {
             method: 'GET',
             credentials: 'include',
@@ -132,6 +132,8 @@ function Walks() {
                     onClick={() => handleNavigation('/home', 'home')}>Psiaki w G4</button>
                 <button  className={`menu_buttons ${activeButton === 'walks' ? 'active' : ''}`}
                     onClick={() => handleNavigation('/walks', 'walks')}>Spacery</button>
+                <button className={`menu_buttons ${activeButton === 'statistics' ? 'active' : ''}`}
+                    onClick={() => handleNavigation('/statistics', 'statistics')}>Statystyki spacerowe</button>
                 <button className={`menu_buttons ${activeButton === 'adoptions' ? 'active' : ''}`}
                     onClick={() => handleNavigation('/adoptions', 'adoptions')}>Procesy adopcyjne</button>
                 <button className="menu_buttons" id="log_out_button" onClick={logOut}>Wyloguj</button>
@@ -158,8 +160,6 @@ function Walks() {
                         Zapisz spacery
                     </button>
                 </div>
-            </div>
-            <div className="footer">
             </div>
         </div>
     )

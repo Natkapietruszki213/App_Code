@@ -40,11 +40,6 @@
     gap: 1rem; 
     box-sizing: border-box; 
 }
-.footer{
-    height: 10vh;
-    width:100vw;  
-    background-color: #4e2b7f;
-}
 #log_out_button
 {
     color:#f8c622;

@@ -86,6 +86,64 @@ app.post('/walks', (req, res) => {
     });
 });
 
+app.get('/statistics',checkSession, (req, res) => {
+    const sql = `
+        SELECT 
+            dogs.name AS dog_name, 
+            MAX(walk.date) AS last_walk_date
+        FROM 
+            dogs
+        LEFT JOIN 
+            walk 
+        ON 
+            dogs.name = walk.dog_name
+        GROUP BY 
+            dogs.name
+    `;
+
+    const db = require('./database'); 
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Błąd podczas pobierania statystyk:', err.message);
+            res.status(500).json({ error: 'Błąd serwera' });
+            return;
+        }
+        const today = new Date();
+
+        const statistics = rows.map(row => {
+            console.log('Raw last_walk_date:', row.last_walk_date); 
+            let daysAgo = null;
+
+        if (row.last_walk_date) {
+            try {
+                const [day, month, year] = row.last_walk_date.split('-');
+                const formattedDate = `${year}-${month}-${day}`;
+                const lastWalkDate = new Date(`${formattedDate}`); 
+
+                console.log('Parsed lastWalkDate:', lastWalkDate);
+                if (isNaN(lastWalkDate)) {
+                    throw new Error('Invalid Date Format');
+                }
+
+                const differenceInTime = today.getTime() - lastWalkDate.getTime(); 
+                daysAgo = Math.floor(differenceInTime / (1000 * 60 * 60 * 24)); 
+            } catch (error) {
+                console.error('Error parsing date:', error.message);
+            }
+        }
+
+        return {
+            dog_name: row.dog_name,
+            last_walk_date: row.last_walk_date || 'brak',
+            days_ago: daysAgo !== null ? daysAgo : 'brak'
+        };
+});
+        console.log('Obliczone statystyki:', statistics);
+        res.json(statistics);
+    });
+});
+
 app.get('/adoptions',checkSession,(req,res) =>{
     res.send('Procesy adopcyjne');
 });

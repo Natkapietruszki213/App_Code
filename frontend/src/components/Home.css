@@ -30,18 +30,13 @@
     border-bottom: 3px solid #ffffff;
 }
 .page{
-    height: 80vh;
+    height: 90vh;
     width:100vw;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background-color: #ddc4f5;
-}
-.footer{
-    height: 10vh;
-    width:100vw;  
-    background-color: #4e2b7f;
 }
 #log_out_button
 {

@@ -57,15 +57,13 @@ function Adoptions() {
                     onClick={() => handleNavigation('/home', 'home')}>Psiaki w G4</button>
                 <button  className={`menu_buttons ${activeButton === 'walks' ? 'active' : ''}`}
                     onClick={() => handleNavigation('/walks', 'walks')}>Spacery</button>
+                <button className={`menu_buttons ${activeButton === 'statistics' ? 'active' : ''}`}
+                    onClick={() => handleNavigation('/statistics', 'statistics')}>Statystyki spacerowe</button>
                 <button className={`menu_buttons ${activeButton === 'adoptions' ? 'active' : ''}`}
                     onClick={() => handleNavigation('/adoptions', 'adoptions')}>Procesy adopcyjne</button>
                 <button className="menu_buttons" id="log_out_button" onClick={logOut}>Wyloguj</button>
             </div>
             <div className="page">
-            
-            </div>
-            <div className="footer">
-
             </div>
         </div>
     )
