@@ -48,14 +48,59 @@ app.get('/home', checkSession, (req, res) => {
     res.send('Strona główna');
 });
 
-app.get('/walks',checkSession,(req,res) =>{
-    res.send('Strona główna');
+app.get('/walks', checkSession, (req, res) => {
+    res.json({ message: 'Spacery' }); 
+});
+
+app.post('/walks', (req, res) => {
+    const { date, selectedDogs } = req.body;
+
+    if (!date || !Array.isArray(selectedDogs)) {
+        return res.status(400).send({ error: 'Błędne dane wejściowe' });
+    }
+
+    const insertSQL = 'INSERT INTO walk (date, dog_name) VALUES (?, ?)';
+    const db = require('./database'); 
+
+    db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+        try {
+            selectedDogs.forEach(dog => {
+                db.run(insertSQL, [date, dog], (err) => {
+                    if (err) {
+                        throw err; 
+                    }
+                });
+            });
+            db.run('COMMIT', (err) => {
+                if (err) {
+                    throw err; 
+                }
+                res.status(201).send({ message: 'Spacery zostały dodane' });
+            });
+        } catch (error) {
+            console.error('Błąd podczas zapisu do bazy:', error);
+            db.run('ROLLBACK'); 
+            res.status(500).send({ error: 'Błąd bazy danych' });
+        }
+    });
 });
 
 app.get('/adoptions',checkSession,(req,res) =>{
-    res.send('Strona główna');
+    res.send('Procesy adopcyjne');
 });
 
+app.get('/dogs', (req, res) => {
+    const sql = 'SELECT name FROM dogs'; 
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Błąd podczas wykonywania zapytania:', err.message);
+            res.status(500).json({ error: 'Błąd serwera' });
+            return;
+        }
+        res.json(rows); 
+    });
+});
 
 app.post('/logout', (req, res) => {
     if (req.session) {
