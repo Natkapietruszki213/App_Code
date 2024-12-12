@@ -7,9 +7,9 @@ function Walks() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const year = String(today.getFullYear());
-    const month = String(today.getMonth()+1);
-    const day = String(today.getDate()); 
-    const today_date = `${day}-${month}-${year}`;
+    const month = String(today.getMonth() + 1).padStart(2, '0'); 
+    const day = String(today.getDate()).padStart(2, '0');        
+    const today_date = `${year}-${month}-${day}`; 
     const navigate = useNavigate();
     const [activeButton, setActiveButton] = useState('');
     const [dogs, setDogs] = useState([]);

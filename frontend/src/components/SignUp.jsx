@@ -12,6 +12,9 @@ function SignUp() {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
 
+    function GoBack(){
+        navigate('/login');}
+
     const validate = async (e) => {
         e.preventDefault();
 
@@ -39,6 +42,7 @@ function SignUp() {
           console.log(response);
         if (response.ok) {
                 alert(JSON.stringify("Konto zostało pomyślnie utworzone!"));
+                navigate('/login');
             } 
             else {
                 alert(JSON.stringify("Wystąpił błąd."));
@@ -52,7 +56,7 @@ function SignUp() {
             </div>
             <div className="page_signup">
                 <div className="signup_window">
-                    <form className="signup_form" onSubmit={validate}>
+                    <form className="signup_form" id="signup_form" onSubmit={validate}>
                         <label htmlFor="name">Imię:</label>
                         <input id="name" placeholder="Podaj imię:" type="text" onChange={(e) => setName(e.target.value)} value={name}></input>
                         <label htmlFor="surname">Nazwisko:</label>
@@ -64,6 +68,7 @@ function SignUp() {
                         <label htmlFor="password">Hasło:</label>
                         <input id="password" placeholder="Podaj hasło:" value={password} type="password" onChange={(e) => setPassword(e.target.value)}></input>
                         <button type='submit' id='try_sign_up_button'>Załóż konto</button>
+                        <button type='button' id='back_button' onClick={GoBack}>Powrót</button>
                         <div className="bottom_buttons">
                         </div>
                     </form>

@@ -5,6 +5,10 @@ const router = express.Router()
 const app = express()
 const port = 3000
 const session = require('express-session')
+const nodemailer = require('nodemailer')
+const crypto = require('crypto')
+const bcrypt = require('bcrypt');
+
 
 app.use(express.json());
 const cookieParser = require('cookie-parser');
@@ -59,6 +63,8 @@ app.post('/walks', (req, res) => {
         return res.status(400).send({ error: 'Błędne dane wejściowe' });
     }
 
+    const formattedDate = new Date(date).toISOString().split('T')[0];
+
     const insertSQL = 'INSERT INTO walk (date, dog_name) VALUES (?, ?)';
     const db = require('./database'); 
 
@@ -66,7 +72,7 @@ app.post('/walks', (req, res) => {
         db.run('BEGIN TRANSACTION');
         try {
             selectedDogs.forEach(dog => {
-                db.run(insertSQL, [date, dog], (err) => {
+                db.run(insertSQL, [formattedDate, dog], (err) => {
                     if (err) {
                         throw err; 
                     }
@@ -86,7 +92,71 @@ app.post('/walks', (req, res) => {
     });
 });
 
-app.get('/statistics',checkSession, (req, res) => {
+app.post('/forgotPassword', (req, res) => {
+    const { email } = req.body;
+
+    // Sprawdź, czy użytkownik istnieje w bazie danych
+    db.get('SELECT * FROM users WHERE mail = ?', [email], (err, user) => {
+        if (err) {
+            console.error('Błąd podczas sprawdzania użytkownika:', err);
+            return res.status(500).send({ error: 'Błąd serwera' });
+        }
+
+        if (!user) {
+            return res.status(404).send({ message: 'Użytkownik nie istnieje' });
+        }
+
+        // Wygeneruj unikalny token
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiration = new Date(Date.now() + 3600 * 1000); // Token ważny przez 1 godzinę
+
+        // Zapisz token w bazie danych
+        db.run(
+            'UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE mail = ?',
+            [token, expiration, email],
+            (err) => {
+                if (err) {
+                    console.error('Błąd podczas zapisywania tokenu:', err);
+                    return res.status(500).send({ error: 'Błąd serwera' });
+                }
+
+                // Wyślij e-mail do użytkownika
+                const transporter = nodemailer.createTransport({
+                    service: 'Gmail',
+                    auth: {
+                        user: 'natalia.konopka213@gmail.com',
+                        pass: 'fclu jeml wsrg zntr' // Wprowadź tutaj hasło aplikacji
+                    },
+                    tls: {
+                        rejectUnauthorized: false // Wyłącza weryfikację certyfikatu
+                    }
+                });
+                
+
+                const resetLink = `http://localhost:5173/newPassword?token=${token}`;
+                const mailOptions = {
+                    from: 'natalia.konopka213@gmail.com',
+                    to: email,
+                    subject: 'Resetowanie hasła',
+                    text: `Kliknij w poniższy link, aby zresetować swoje hasło:\n\n${resetLink}`,
+                    html: `<p>Kliknij w poniższy link, aby zresetować swoje hasło:</p><a href="${resetLink}">${resetLink}</a>`
+                };
+
+                transporter.sendMail(mailOptions, (err, info) => {
+                    if (err) {
+                        console.error('Błąd podczas wysyłania e-maila:', err);
+                        return res.status(500).send({ error: 'Nie udało się wysłać e-maila' });
+                    }
+
+                    console.log('E-mail wysłany:', info.response);
+                    res.status(200).send({ message: 'E-mail z linkiem resetującym został wysłany' });
+                });
+            }
+        );
+    });
+});
+
+app.get('/statistics', checkSession, (req, res) => {
     const sql = `
         SELECT 
             dogs.name AS dog_name, 
@@ -101,44 +171,48 @@ app.get('/statistics',checkSession, (req, res) => {
             dogs.name
     `;
 
-    const db = require('./database'); 
-
     db.all(sql, [], (err, rows) => {
         if (err) {
             console.error('Błąd podczas pobierania statystyk:', err.message);
             res.status(500).json({ error: 'Błąd serwera' });
             return;
         }
+
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // Wyzerowanie godzin, minut i sekund
+
+        const parseDateAsLocal = (dateString) => {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day); // Tworzy lokalną datę bez przesunięcia UTC
+        };
 
         const statistics = rows.map(row => {
             console.log('Raw last_walk_date:', row.last_walk_date); 
             let daysAgo = null;
 
-        if (row.last_walk_date) {
-            try {
-                const [day, month, year] = row.last_walk_date.split('-');
-                const formattedDate = `${year}-${month}-${day}`;
-                const lastWalkDate = new Date(`${formattedDate}`); 
+            if (row.last_walk_date) {
+                try {
+                    const lastWalkDate = parseDateAsLocal(row.last_walk_date);
 
-                console.log('Parsed lastWalkDate:', lastWalkDate);
-                if (isNaN(lastWalkDate)) {
-                    throw new Error('Invalid Date Format');
+                    console.log('Parsed lastWalkDate:', lastWalkDate);
+                    if (isNaN(lastWalkDate)) {
+                        throw new Error('Invalid Date Format');
+                    }
+
+                    const differenceInTime = today - lastWalkDate; 
+                    daysAgo = Math.floor(differenceInTime / (1000 * 60 * 60 * 24)); // Różnica w dniach
+                } catch (error) {
+                    console.error('Error parsing date:', error.message);
                 }
-
-                const differenceInTime = today.getTime() - lastWalkDate.getTime(); 
-                daysAgo = Math.floor(differenceInTime / (1000 * 60 * 60 * 24)); 
-            } catch (error) {
-                console.error('Error parsing date:', error.message);
             }
-        }
 
-        return {
-            dog_name: row.dog_name,
-            last_walk_date: row.last_walk_date || 'brak',
-            days_ago: daysAgo !== null ? daysAgo : 'brak'
-        };
-});
+            return {
+                dog_name: row.dog_name,
+                last_walk_date: row.last_walk_date || 'brak',
+                days_ago: daysAgo !== null ? daysAgo : 'brak'
+            };
+        });
+
         console.log('Obliczone statystyki:', statistics);
         res.json(statistics);
     });
@@ -147,6 +221,62 @@ app.get('/statistics',checkSession, (req, res) => {
 app.get('/adoptions',checkSession,(req,res) =>{
     res.send('Procesy adopcyjne');
 });
+
+app.post('/newPassword', async (req, res) => {
+    const { password, token } = req.body;
+
+    // Sprawdź, czy otrzymano wymagane dane
+    if (!password || !token) {
+        return res.status(400).json({ error: "Hasło i token są wymagane!" });
+    }
+
+    try {
+        // Znajdź użytkownika na podstawie tokena
+        db.get(
+            'SELECT * FROM users WHERE reset_token = ? AND reset_token_expiration > ?',
+            [token, new Date()],
+            async (err, user) => {
+                if (err) {
+                    console.error("Błąd bazy danych:", err);
+                    return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
+                }
+
+                // Sprawdź, czy użytkownik istnieje i token jest ważny
+                if (!user) {
+                    return res.status(400).json({ error: "Nieprawidłowy lub wygasły token!" });
+                }
+
+                // Zhashuj nowe hasło
+                const saltRounds = 10;
+                const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+                // Zaktualizuj hasło w bazie danych
+                db.run(
+                    'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiration = NULL WHERE reset_token = ?',
+                    [hashedPassword, token],
+                    function (updateErr) {
+                        if (updateErr) {
+                            console.error("Błąd aktualizacji hasła:", updateErr);
+                            return res.status(500).json({ error: "Nie udało się zaktualizować hasła" });
+                        }
+
+                        if (this.changes === 0) {
+                            console.error("Nie znaleziono użytkownika z podanym tokenem.");
+                            return res.status(400).json({ error: "Nie znaleziono użytkownika z podanym tokenem" });
+                        }
+
+                        res.status(200).json({ message: "Hasło zostało zaktualizowane!" });
+                    }
+                );
+            }
+        );
+    } catch (error) {
+        console.error("Błąd podczas zmiany hasła:", error);
+        res.status(500).json({ error: "Wewnętrzny błąd serwera" });
+    }
+});
+
+
 
 app.get('/dogs', (req, res) => {
     const sql = 'SELECT name FROM dogs'; 
@@ -182,42 +312,64 @@ app.post('/logout', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    console.log("Request body:", req.body);
-    const {name, password } = req.body;
-    db.get('SELECT * FROM users WHERE login = ?', [name], (err, row) => {
+    const { name, password } = req.body;
+
+    if (!name || !password) {
+        return res.status(400).json({ error: "Podaj login i hasło" });
+    }
+
+    db.get('SELECT * FROM users WHERE login = ?', [name], async (err, row) => {
         if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Internal server error" });
+            console.error("Błąd bazy danych:", err);
+            return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
         }
         if (row) {
-            if (password === row.password) {
-                req.session.users = {
-                    user_id: row.user_id,
-                    name: row.name,
-                    surname: row.surname,
-                };
-                console.log("Zalogowano pomyślnie:", name);
-                return res.status(200).json({ message: "Zalogowano pomyślnie" });
-            } else {
-                return res.status(401).json({ message: "Niepoprawne hasło" });
+            try {
+                const match = await bcrypt.compare(password, row.password);
+                if (match) {
+                    req.session.users = {
+                        user_id: row.user_id,
+                        name: row.name,
+                        surname: row.surname,
+                    };
+                    console.log("Zalogowano pomyślnie:", name);
+                    return res.status(200).json({ message: "Zalogowano pomyślnie" });
+                } else {
+                    return res.status(401).json({ message: "Niepoprawne hasło" });
+                }
+            } catch (error) {
+                console.error("Błąd podczas weryfikacji hasła:", error);
+                return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
             }
         } else {
-            return res.status(404).json({ message: "Użytkownik nie istnieje"});
+            return res.status(404).json({ message: "Użytkownik nie istnieje" });
         }
     });
-  });
-  
-app.post('/signUp', (req, res) => {
-  const {name, surname, email, login, password} = req.body;
-  const sql = `INSERT INTO users (name, surname, mail, login, password) VALUES (?, ?, ?, ?, ?)`;
-
-  db.run(sql, [name, surname, email, login, password], function(err) {
-    if (err) {
-        console.error("SQL error:", err);
-        return res.status(400).json({error: err.message});
-    }
-    res.json({id: this.lastID});
 });
+  
+  app.post('/signUp', async (req, res) => {
+    const { name, surname, email, login, password } = req.body;
+
+    if (!name || !surname || !email || !login || !password) {
+        return res.status(400).json({ error: 'Wszystkie pola są wymagane!' });
+    }
+
+    try {
+        const saltRounds = 10; // Liczba rund solenia
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        const sql = `INSERT INTO users (name, surname, mail, login, password) VALUES (?, ?, ?, ?, ?)`;
+        db.run(sql, [name, surname, email, login, hashedPassword], function (err) {
+            if (err) {
+                console.error("SQL error:", err);
+                return res.status(400).json({ error: err.message });
+            }
+            res.json({ id: this.lastID });
+        });
+    } catch (error) {
+        console.error("Błąd hashowania hasła:", error);
+        res.status(500).json({ error: "Wewnętrzny błąd serwera" });
+    }
 });
 
 app.listen(port, () => {

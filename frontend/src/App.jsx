@@ -8,7 +8,8 @@ import Adoptions from './components/Adoptions';
 import Modal from './components/Modal';
 import Statistics from './components/Statistics';
 import SignUp from './components/SignUp';
-import ForgetPassword from './components/ForgetPassword';
+import ForgotPassword from './components/ForgotPassword';
+import NewPassword from './components/newPassword';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
@@ -24,7 +25,9 @@ function App() {
                     <Route path="/signUp" exact element={<SignUp />} />
                     <Route path="/login" exact element={<Login />} />
                     <Route path="/adoptions" exact element={<Adoptions />} />
-                    <Route path="/forgetPassword" exact element={<ForgetPassword />} />
+                    <Route path="/forgotPassword" exact element={<ForgotPassword />} />
+                    <Route path="/newPassword" exact element={<NewPassword />} />
+
                 </Routes>
             </Router>
         </div>
