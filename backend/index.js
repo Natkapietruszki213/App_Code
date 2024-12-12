@@ -44,18 +44,9 @@ function checkSession(req,res,next){
     next();
 }
 
-function checkIfLogged(req,res,next){
-    if (req.session || req.session.users || req.session.users.user_id) {
-        navigate('/home');
-    }
-    next();
-}
-
 app.get('/login', (req, res) => {
     res.send('Strona logowania'); 
 });
-
-
 
 app.get('/walks', checkSession, (req, res) => {
     res.json({ message: 'Spacery' }); 
