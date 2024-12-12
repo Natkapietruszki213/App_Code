@@ -216,6 +216,48 @@ app.get('/statistics', checkSession, (req, res) => {
         console.log('Obliczone statystyki:', statistics);
         res.json(statistics);
     });
+});app.get('/statistics', checkSession, (req, res) => {
+    console.log('Sesja użytkownika:', req.session);
+    const sql = `
+        SELECT 
+            dogs.name AS dog_name, 
+            MAX(walk.date) AS last_walk_date
+        FROM 
+            dogs
+        LEFT JOIN 
+            walk 
+        ON 
+            dogs.name = walk.dog_name
+        GROUP BY 
+            dogs.name
+    `;
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Błąd podczas pobierania statystyk:', err.message);
+            res.status(500).json({ error: 'Błąd serwera' });
+            return;
+        }
+
+        console.log('Pobrane dane z bazy:', rows);
+
+        const statistics = rows.map(row => {
+            let daysAgo = 'brak';
+            if (row.last_walk_date) {
+                const lastWalkDate = new Date(row.last_walk_date);
+                const today = new Date();
+                const diffTime = today - lastWalkDate;
+                daysAgo = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            }
+            return {
+                dog_name: row.dog_name,
+                last_walk_date: row.last_walk_date || 'brak',
+                days_ago: daysAgo
+            };
+        });
+
+        res.json(statistics);
+    });
 });
 
 app.get('/adoptions',checkSession,(req,res) =>{
@@ -275,8 +317,6 @@ app.post('/newPassword', async (req, res) => {
         res.status(500).json({ error: "Wewnętrzny błąd serwera" });
     }
 });
-
-
 
 app.get('/dogs', (req, res) => {
     const sql = 'SELECT name FROM dogs'; 

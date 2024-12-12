@@ -32,24 +32,27 @@ function logOut() {
     });
 }
 
-    useEffect(() => {
-        fetch('http://localhost:3000/statistics', {
-            method: 'GET',
-            credentials: 'include',
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Błąd podczas pobierania statystyk');
-                }
-                return response.json();
-            })
-            .then(data => {
-                setStatistics(data);
-            })
-            .catch(error => {
-                console.error('Błąd:', error);
-            });
-    }, []);
+useEffect(() => {
+    fetch('http://localhost:3000/statistics', {
+        method: 'GET',
+        credentials: 'include',
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('Nieautoryzowany dostęp');
+        }
+        return response.json(); // Przekształć odpowiedź w JSON
+    })
+    .then(data => {
+        console.log('Pobrane dane:', data); // Logowanie danych do weryfikacji
+        setStatistics(data); // Ustaw dane w stanie
+    })
+    .catch((error) => {
+        console.error('Błąd przy fetchingu /statistics:', error);
+        navigate('/login');
+    });                
+}, []);
 
     return (
         <div className="statistics">
