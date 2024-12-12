@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './SignUp.css';
 import logo from "../assets/logo.jpg"
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,26 @@ function SignUp() {
     const [email, setEmail] = useState('');
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
+
+     // Sprawdzenie sesji użytkownika na starcie
+     useEffect(() => {
+        fetch('http://localhost:3000/checkSession', {
+            method: 'GET',
+            credentials: 'include',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.loggedIn) {
+                navigate('/home'); // Przekierowanie zalogowanego użytkownika
+            } else {
+                setLoading(false); // Jeśli niezalogowany, zakończ ładowanie
+            }
+        })
+        .catch(error => {
+            console.error("Błąd podczas sprawdzania sesji:", error);
+            setLoading(false); // Pozwól użytkownikowi pozostać na stronie
+        });
+    }, [navigate]);
 
     function GoBack(){
         navigate('/login');}

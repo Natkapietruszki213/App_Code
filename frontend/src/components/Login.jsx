@@ -1,57 +1,82 @@
-import React, { useState, useEffect } from "react";
-import './Login.css';
-import logo from "../assets/logo.jpg"
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import './Login.css';
+import logo from "../assets/logo.jpg";
 
 function Login() {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-
-    let isEmpty = (val) => {
-        if (val==null || val=='') return true;
-        else return false;
-    }
-
-    let validate = (e) => {
-        e.preventDefault(); 
-        if (isEmpty(name) || isEmpty(password)) 
-        {
-            alert("Proszę wpisać login i hasło!");
-        }
-        else
-        {
-            fetch('http://localhost:3000/login',{
-                method: 'POST',
-                credentials: 'include', 
-                headers:{
-                    'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({name:name, password: password })
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log(response);
-                    return response.json();
-                } else {
-                    console.log(response);
-                    throw new Error('Niepoprawny login lub hasło');
-                }
-            })
-            .then(data => {
-                console.log("Zalogowano użytkownika!");
-                navigate('/home');
-            })
-            .catch(error => {
-                alert(error.message);
-            });
-        }
-    }
+    const [loading, setLoading] = useState(true); // Stan ładowania
     const navigate = useNavigate();
-    const clickSignUpButton = () => {
+
+    // Sprawdzenie sesji użytkownika na starcie
+    useEffect(() => {
+        fetch('http://localhost:3000/checkSession', {
+            method: 'GET',
+            credentials: 'include',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.loggedIn) {
+                navigate('/home'); // Przekierowanie zalogowanego użytkownika
+            } else {
+                setLoading(false); // Jeśli niezalogowany, zakończ ładowanie
+            }
+        })
+        .catch(error => {
+            console.error("Błąd podczas sprawdzania sesji:", error);
+            setLoading(false); // Pozwól użytkownikowi pozostać na stronie
+        });
+    }, [navigate]);
+
+    // Funkcja walidacji pól
+    const isEmpty = (value) => !value || value.trim() === '';
+
+    // Obsługa logowania
+    const handleLogin = (e) => {
+        e.preventDefault();
+
+        if (isEmpty(name) || isEmpty(password)) {
+            alert("Proszę wpisać login i hasło!");
+            return;
+        }
+
+        fetch('http://localhost:3000/login', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, password }),
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Niepoprawny login lub hasło');
+            }
+        })
+        .then(() => {
+            console.log("Zalogowano użytkownika!");
+            navigate('/home'); // Przekierowanie na stronę główną
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+    };
+
+    // Obsługa przekierowania na rejestrację
+    const handleSignUpClick = () => {
         navigate('/signup');
-    }
-    const forgotPasswordClick = () => {
-        navigate('/forgotPassword')
+    };
+
+    // Obsługa przekierowania na "zapomniałem hasła"
+    const handleForgotPasswordClick = () => {
+        navigate('/forgotPassword');
+    };
+
+    if (loading) {
+        return <div>Ładowanie...</div>; // Ekran ładowania
     }
 
     return (
@@ -61,20 +86,44 @@ function Login() {
             </div>
             <div className="page_login">
                 <div className="login_window">
-                    <form className="login_form">
+                    <form className="login_form" onSubmit={handleLogin}>
                         <label htmlFor="login">Login</label>
-                        <input id="login" placeholder="Wpisz login:" value={name} type='text' onChange={(e) => setName(e.target.value)}></input>
+                        <input
+                            id="login"
+                            placeholder="Wpisz login"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
                         <label htmlFor="password">Hasło</label>
-                        <input id="password" placeholder="Wpisz hasło:" value={password} type='password' onChange={(e) => setPassword(e.target.value)}></input>
-                        <button type='button' id='login_button' onClick={(e) => validate(e)}>Zaloguj się</button>
+                        <input
+                            id="password"
+                            type="password"
+                            placeholder="Wpisz hasło"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button type="submit" id="login_button">Zaloguj się</button>
                         <div className="bottom_buttons">
-                            <button type='button' id='sign_up_button' onClick={clickSignUpButton}>Zarejestruj się</button>
-                            <button type='button' id='forgot_password_button' onClick={forgotPasswordClick}>Zapomniałeś hasła?</button>
+                            <button
+                                type="button"
+                                id="sign_up_button"
+                                onClick={handleSignUpClick}
+                            >
+                                Zarejestruj się
+                            </button>
+                            <button
+                                type="button"
+                                id="forgot_password_button"
+                                onClick={handleForgotPasswordClick}
+                            >
+                                Zapomniałeś hasła?
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    )
+    );
 }
+
 export default Login;

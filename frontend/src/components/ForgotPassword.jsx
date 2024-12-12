@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './ForgotPassword.css';
 import logo from "../assets/logo.jpg"
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,26 @@ function ForgotPassword() {
     const navigate = useNavigate();
     const [email, setEmail] = useState(""); // Stan do przechowywania e-maila
     const [message, setMessage] = useState(""); // Wiadomość o wyniku akcji (sukces/błąd)
+
+     // Sprawdzenie sesji użytkownika na starcie
+     useEffect(() => {
+        fetch('http://localhost:3000/checkSession', {
+            method: 'GET',
+            credentials: 'include',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.loggedIn) {
+                navigate('/home'); // Przekierowanie zalogowanego użytkownika
+            } else {
+                setLoading(false); // Jeśli niezalogowany, zakończ ładowanie
+            }
+        })
+        .catch(error => {
+            console.error("Błąd podczas sprawdzania sesji:", error);
+            setLoading(false); // Pozwól użytkownikowi pozostać na stronie
+        });
+    }, [navigate]);
 
     const handleEmailChange = (e) => {
         setEmail(e.target.value); // Aktualizuj e-mail na podstawie wpisu użytkownika

@@ -37,15 +37,24 @@ app.use(session({
     }
 }));
 
+function checkIfLogged(req, res, next) {
+    if (req.session && req.session.users && req.session.users.user_id) {
+        return res.status(403).json({ message: "Nie możesz odwiedzić tej strony, będąc zalogowanym." });
+    }
+    next();
+}
+
 function checkSession(req,res,next){
     if (!req.session || !req.session.users || !req.session.users.user_id) {
         return res.status(401).json({ message: 'Niezalogowany dostęp zabroniony' });
     }
     next();
 }
-
-app.get('/login', (req, res) => {
-    res.send('Strona logowania'); 
+app.get('/checkSession', (req, res) => {
+    if (req.session && req.session.users && req.session.users.user_id) {
+        return res.status(200).json({ loggedIn: true });
+    }
+    res.status(200).json({ loggedIn: false });
 });
 
 app.get('/walks', checkSession, (req, res) => {
@@ -86,7 +95,7 @@ app.post('/walks', (req, res) => {
     });
 });
 
-app.post('/forgotPassword', (req, res) => {
+app.post('/forgotPassword', checkIfLogged, (req, res) => {
     const { email } = req.body;
 
     // Sprawdź, czy użytkownik istnieje w bazie danych
@@ -210,7 +219,9 @@ app.get('/statistics', checkSession, (req, res) => {
         console.log('Obliczone statystyki:', statistics);
         res.json(statistics);
     });
-});app.get('/statistics', checkSession, (req, res) => {
+});
+
+app.get('/statistics', checkSession, (req, res) => {
     console.log('Sesja użytkownika:', req.session);
     const sql = `
         SELECT 
@@ -261,7 +272,7 @@ app.get('/home',checkSession,(req,res) =>{
     res.send('Procesy adopcyjne');
 });
 
-app.post('/newPassword', async (req, res) => {
+app.post('/newPassword', checkIfLogged, async (req, res) => {
     const { password, token } = req.body;
 
     // Sprawdź, czy otrzymano wymagane dane
@@ -348,7 +359,11 @@ app.post('/logout', (req, res) => {
     }
 });
 
-app.post('/login', (req, res) => {
+app.get('/login',checkIfLogged, (req, res) => {
+    res.send('Strona logowania'); 
+});
+
+app.post('/login', checkIfLogged, (req, res) => {
     const { name, password } = req.body;
 
     if (!name || !password) {
@@ -384,7 +399,7 @@ app.post('/login', (req, res) => {
     });
 });
   
-  app.post('/signUp', async (req, res) => {
+  app.post('/signUp',checkIfLogged, async (req, res) => {
     const { name, surname, email, login, password } = req.body;
 
     if (!name || !surname || !email || !login || !password) {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './newPassword.css';
 import logo from "../assets/logo.jpg"
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,27 @@ function NewPassword() {
     const handlePasswordChange = (e) => {
         setPassword(e.target.value); 
     };
+    
+     // Sprawdzenie sesji użytkownika na starcie
+     useEffect(() => {
+        fetch('http://localhost:3000/checkSession', {
+            method: 'GET',
+            credentials: 'include',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.loggedIn) {
+                navigate('/home'); // Przekierowanie zalogowanego użytkownika
+            } else {
+                setLoading(false); // Jeśli niezalogowany, zakończ ładowanie
+            }
+        })
+        .catch(error => {
+            console.error("Błąd podczas sprawdzania sesji:", error);
+            setLoading(false); // Pozwól użytkownikowi pozostać na stronie
+        });
+    }, [navigate]);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
