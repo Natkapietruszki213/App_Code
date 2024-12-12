@@ -44,13 +44,18 @@ function checkSession(req,res,next){
     next();
 }
 
+function checkIfLogged(req,res,next){
+    if (req.session || req.session.users || req.session.users.user_id) {
+        navigate('/home');
+    }
+    next();
+}
+
 app.get('/login', (req, res) => {
     res.send('Strona logowania'); 
 });
 
-app.get('/home', checkSession, (req, res) => {
-    res.send('Strona główna');
-});
+
 
 app.get('/walks', checkSession, (req, res) => {
     res.json({ message: 'Spacery' }); 
@@ -58,15 +63,13 @@ app.get('/walks', checkSession, (req, res) => {
 
 app.post('/walks', (req, res) => {
     const { date, selectedDogs } = req.body;
+    const formattedDate = new Date(date).toISOString().split('T')[0];
+    const insertSQL = 'INSERT INTO walk (date, dog_name) VALUES (?, ?)';
+    const db = require('./database'); 
 
     if (!date || !Array.isArray(selectedDogs)) {
         return res.status(400).send({ error: 'Błędne dane wejściowe' });
     }
-
-    const formattedDate = new Date(date).toISOString().split('T')[0];
-
-    const insertSQL = 'INSERT INTO walk (date, dog_name) VALUES (?, ?)';
-    const db = require('./database'); 
 
     db.serialize(() => {
         db.run('BEGIN TRANSACTION');
@@ -263,6 +266,9 @@ app.get('/statistics', checkSession, (req, res) => {
 app.get('/adoptions',checkSession,(req,res) =>{
     res.send('Procesy adopcyjne');
 });
+app.get('/home',checkSession,(req,res) =>{
+    res.send('Procesy adopcyjne');
+});
 
 app.post('/newPassword', async (req, res) => {
     const { password, token } = req.body;
@@ -318,8 +324,8 @@ app.post('/newPassword', async (req, res) => {
     }
 });
 
-app.get('/dogs', (req, res) => {
-    const sql = 'SELECT name FROM dogs'; 
+app.get('/dogs', checkSession, (req, res) => {
+    const sql = 'SELECT dog_id, name, weight, age, box, arrived, work FROM dogs'; 
     db.all(sql, [], (err, rows) => {
         if (err) {
             console.error('Błąd podczas wykonywania zapytania:', err.message);

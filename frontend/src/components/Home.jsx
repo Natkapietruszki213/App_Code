@@ -25,6 +25,24 @@ function Home() {
             navigate('/login');
         });
     }, []);
+    useEffect(() => {
+        fetch('http://localhost:3000/dogs', {
+            method: 'GET',
+            credentials: 'include',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Błąd w pobieraniu danych psów');
+            }
+            return response.json();
+        })
+        .then(data => {
+            setDogs(data); // Przypisz pobrane psy do stanu
+        })
+        .catch((error) => {
+            console.error('Błąd przy fetchingu /dogs:', error);
+        });
+    }, []);
 
     function handleNavigation(path, buttonName) {
         setActiveButton(buttonName);
@@ -65,12 +83,26 @@ function Home() {
                 <button className="menu_buttons" id="log_out_button" onClick={logOut}>Wyloguj</button>
             </div>
             <div className="page">
-            <h1>Psiaki w schronisku:</h1>
-                <ul>
-                    {dogs.map(dog => (
-                        <li key={dog.id}>{dog.name} - {dog.weight}</li> 
-                    ))}
-                </ul>
+            <ul className="dogs-list">
+                {dogs.map(dog => (
+                    <li key={dog.id} className="dog-item">
+                        <img 
+                            src={`/src/assets/${dog.name.toLowerCase()}.jpg`} 
+                            alt={dog.name} 
+                            className="dog-image"
+                            onError={(e) => { e.target.src = "/src/assents/default.jpg"; }} 
+                        />
+                        <div className="dog-details">
+                            <span>{dog.name}</span>
+                            <span>Waga: {dog.weight} kg</span>
+                            <span>Wiek: {dog.age} lat</span>
+                            <span>Nr boksu: {dog.box}</span>
+                            <span>Przyjęty: {dog.arrived}</span>
+                            <span>Uwagi: {dog.work}</span>
+                        </div>
+                    </li>
+                ))}
+            </ul>
             </div>
         </div>
     )

@@ -69,7 +69,7 @@ function Login() {
                         <button type='button' id='login_button' onClick={(e) => validate(e)}>Zaloguj się</button>
                         <div className="bottom_buttons">
                             <button type='button' id='sign_up_button' onClick={clickSignUpButton}>Zarejestruj się</button>
-                            <button type='button' id='forgot_password_button' onClick={forgotPasswordClick}>Przypomnij hasło</button>
+                            <button type='button' id='forgot_password_button' onClick={forgotPasswordClick}>Zapomniałeś hasła?</button>
                         </div>
                     </form>
                 </div>

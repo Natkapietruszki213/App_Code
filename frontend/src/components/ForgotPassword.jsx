@@ -11,6 +11,9 @@ function ForgotPassword() {
     const handleEmailChange = (e) => {
         setEmail(e.target.value); // Aktualizuj e-mail na podstawie wpisu użytkownika
     };
+    
+    function GoBack(){
+        navigate('/login');}
 
     const handleSubmit = async (e) => {
         e.preventDefault(); // Zapobiega przeładowaniu strony po wysłaniu formularza
@@ -52,7 +55,8 @@ function ForgotPassword() {
                             onChange={handleEmailChange} 
                             required
                         />
-                        <button type='submit' id='remind_password_button'>Przypomnij hasło</button>
+                        <button type='submit' id='remind_password_button'>Wyślij</button>
+                        <button type='button' id='back_button' onClick={GoBack}>Powrót</button>
                     </form>
                     {message && <p className="message">{message}</p>} {/* Wyświetla wiadomość */}
                 </div>

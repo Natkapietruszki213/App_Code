@@ -22,12 +22,7 @@
     align-items: center;
     justify-content: center;
 }
-.menu_buttons:hover{
-    border-bottom: 3px solid #ffffff;
-}
-.menu_buttons:active{
-    border-bottom: 3px solid #ffffff;
-}
+
 #log_out_button
 {
     color:#f8c622;
@@ -37,6 +32,7 @@
     max-width: 80%; 
     background-color: #ffffff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    color: #6a329f;
 }
 
 .statistics h2 {
@@ -66,5 +62,6 @@
 }
 
 .page {
+    min-height: 90vh;
     background-color: #ddc4f5;
 }
