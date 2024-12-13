@@ -1,0 +1,83 @@
+.page {
+    width: 100vw;
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #ddc4f5;
+    padding: 20px;
+}
+
+.page h1 {
+    font-size: 32px;
+    color: #4e2b7f;
+    margin-bottom: 20px;
+}
+
+table {
+    width: 80%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+thead {
+    background-color: #6a329f;
+    color: white;
+    font-size: 18px;
+    text-align: left;
+}
+
+thead th {
+    padding: 15px;
+    text-align: left;   
+}
+
+tbody tr {
+    border-bottom: 1px solid #ddd;
+}
+
+tbody tr:hover {
+    background-color: #f8e8ff; 
+}
+
+tbody td {
+    padding: 15px;
+    font-size: 16px;
+    color: #4e2b7f;
+}
+
+#acceptButton {
+    padding: 8px 15px;
+    font-size: 14px;
+    border: none;
+    background-color: #4e2b7f;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+button:hover {
+    background-color: #6a329f;
+}
+
+@media (max-width: 768px) {
+    table {
+        font-size: 14px;
+    }
+
+    .menu_buttons {
+        font-size: 16px;
+        width: 30%;
+    }
+
+    button {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+}

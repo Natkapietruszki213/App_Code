@@ -44,15 +44,29 @@ function checkIfLogged(req, res, next) {
     next();
 }
 
-function checkSession(req,res,next){
+function checkSession(req, res, next) {
+    console.log('Sesja:', req.session);
     if (!req.session || !req.session.users || !req.session.users.user_id) {
         return res.status(401).json({ message: 'Niezalogowany dostęp zabroniony' });
     }
     next();
 }
+
+function checkAdminSession(req, res, next) {
+    console.log('Sprawdzanie roli administratora:', req.session?.users?.role);
+    if (!req.session || !req.session.users || req.session.users.role !== 'admin') {
+        return res.status(403).json({ message: "Brak dostępu. Musisz być administratorem." });
+    }
+    next();
+}
+
 app.get('/checkSession', (req, res) => {
     if (req.session && req.session.users && req.session.users.user_id) {
-        return res.status(200).json({ loggedIn: true });
+        return res.status(200).json({
+            loggedIn: true,
+            role: req.session.users.role,
+            name: req.session.users.name, 
+        });
     }
     res.status(200).json({ loggedIn: false });
 });
@@ -98,7 +112,6 @@ app.post('/walks', (req, res) => {
 app.post('/forgotPassword', checkIfLogged, (req, res) => {
     const { email } = req.body;
 
-    // Sprawdź, czy użytkownik istnieje w bazie danych
     db.get('SELECT * FROM users WHERE mail = ?', [email], (err, user) => {
         if (err) {
             console.error('Błąd podczas sprawdzania użytkownika:', err);
@@ -109,11 +122,9 @@ app.post('/forgotPassword', checkIfLogged, (req, res) => {
             return res.status(404).send({ message: 'Użytkownik nie istnieje' });
         }
 
-        // Wygeneruj unikalny token
         const token = crypto.randomBytes(32).toString('hex');
-        const expiration = new Date(Date.now() + 3600 * 1000); // Token ważny przez 1 godzinę
+        const expiration = new Date(Date.now() + 3600 * 1000); 
 
-        // Zapisz token w bazie danych
         db.run(
             'UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE mail = ?',
             [token, expiration, email],
@@ -123,19 +134,17 @@ app.post('/forgotPassword', checkIfLogged, (req, res) => {
                     return res.status(500).send({ error: 'Błąd serwera' });
                 }
 
-                // Wyślij e-mail do użytkownika
                 const transporter = nodemailer.createTransport({
                     service: 'Gmail',
                     auth: {
                         user: 'natalia.konopka213@gmail.com',
-                        pass: 'fclu jeml wsrg zntr' // Wprowadź tutaj hasło aplikacji
+                        pass: 'fclu jeml wsrg zntr' 
                     },
                     tls: {
-                        rejectUnauthorized: false // Wyłącza weryfikację certyfikatu
+                        rejectUnauthorized: false 
                     }
                 });
                 
-
                 const resetLink = `http://localhost:5173/newPassword?token=${token}`;
                 const mailOptions = {
                     from: 'natalia.konopka213@gmail.com',
@@ -156,68 +165,6 @@ app.post('/forgotPassword', checkIfLogged, (req, res) => {
                 });
             }
         );
-    });
-});
-
-app.get('/statistics', checkSession, (req, res) => {
-    const sql = `
-        SELECT 
-            dogs.name AS dog_name, 
-            MAX(walk.date) AS last_walk_date
-        FROM 
-            dogs
-        LEFT JOIN 
-            walk 
-        ON 
-            dogs.name = walk.dog_name
-        GROUP BY 
-            dogs.name
-    `;
-
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Błąd podczas pobierania statystyk:', err.message);
-            res.status(500).json({ error: 'Błąd serwera' });
-            return;
-        }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Wyzerowanie godzin, minut i sekund
-
-        const parseDateAsLocal = (dateString) => {
-            const [year, month, day] = dateString.split('-').map(Number);
-            return new Date(year, month - 1, day); // Tworzy lokalną datę bez przesunięcia UTC
-        };
-
-        const statistics = rows.map(row => {
-            console.log('Raw last_walk_date:', row.last_walk_date); 
-            let daysAgo = null;
-
-            if (row.last_walk_date) {
-                try {
-                    const lastWalkDate = parseDateAsLocal(row.last_walk_date);
-
-                    console.log('Parsed lastWalkDate:', lastWalkDate);
-                    if (isNaN(lastWalkDate)) {
-                        throw new Error('Invalid Date Format');
-                    }
-
-                    const differenceInTime = today - lastWalkDate; 
-                    daysAgo = Math.floor(differenceInTime / (1000 * 60 * 60 * 24)); // Różnica w dniach
-                } catch (error) {
-                    console.error('Error parsing date:', error.message);
-                }
-            }
-
-            return {
-                dog_name: row.dog_name,
-                last_walk_date: row.last_walk_date || 'brak',
-                days_ago: daysAgo !== null ? daysAgo : 'brak'
-            };
-        });
-
-        console.log('Obliczone statystyki:', statistics);
-        res.json(statistics);
     });
 });
 
@@ -275,51 +222,36 @@ app.get('/home',checkSession,(req,res) =>{
 app.post('/newPassword', checkIfLogged, async (req, res) => {
     const { password, token } = req.body;
 
-    // Sprawdź, czy otrzymano wymagane dane
     if (!password || !token) {
         return res.status(400).json({ error: "Hasło i token są wymagane!" });
     }
 
     try {
-        // Znajdź użytkownika na podstawie tokena
-        db.get(
-            'SELECT * FROM users WHERE reset_token = ? AND reset_token_expiration > ?',
-            [token, new Date()],
-            async (err, user) => {
-                if (err) {
-                    console.error("Błąd bazy danych:", err);
-                    return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
-                }
-
-                // Sprawdź, czy użytkownik istnieje i token jest ważny
-                if (!user) {
-                    return res.status(400).json({ error: "Nieprawidłowy lub wygasły token!" });
-                }
-
-                // Zhashuj nowe hasło
-                const saltRounds = 10;
-                const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-                // Zaktualizuj hasło w bazie danych
-                db.run(
-                    'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiration = NULL WHERE reset_token = ?',
-                    [hashedPassword, token],
-                    function (updateErr) {
-                        if (updateErr) {
-                            console.error("Błąd aktualizacji hasła:", updateErr);
-                            return res.status(500).json({ error: "Nie udało się zaktualizować hasła" });
-                        }
-
-                        if (this.changes === 0) {
-                            console.error("Nie znaleziono użytkownika z podanym tokenem.");
-                            return res.status(400).json({ error: "Nie znaleziono użytkownika z podanym tokenem" });
-                        }
-
-                        res.status(200).json({ message: "Hasło zostało zaktualizowane!" });
-                    }
-                );
+        db.get('SELECT * FROM users WHERE login = ?', [name], async (err, row) => {
+            if (err) {
+                console.error("Błąd bazy danych:", err);
+                return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
             }
-        );
+            if (row) {
+                if (!row.is_approved) {
+                    return res.status(403).json({ message: "Twoje konto nie zostało jeszcze zatwierdzone przez administratora." });
+                }
+                const match = await bcrypt.compare(password, row.password);
+                if (match) {
+                    req.session.users = {
+                        user_id: row.user_id,
+                        name: row.name,
+                        surname: row.surname,
+                    };
+                    return res.status(200).json({ message: "Zalogowano pomyślnie" });
+                } else {
+                    return res.status(401).json({ message: "Niepoprawne hasło" });
+                }
+            } else {
+                return res.status(404).json({ message: "Użytkownik nie istnieje" });
+            }
+        });
+        
     } catch (error) {
         console.error("Błąd podczas zmiany hasła:", error);
         res.status(500).json({ error: "Wewnętrzny błąd serwera" });
@@ -369,29 +301,26 @@ app.post('/login', checkIfLogged, (req, res) => {
     if (!name || !password) {
         return res.status(400).json({ error: "Podaj login i hasło" });
     }
-
     db.get('SELECT * FROM users WHERE login = ?', [name], async (err, row) => {
         if (err) {
             console.error("Błąd bazy danych:", err);
             return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
         }
         if (row) {
-            try {
-                const match = await bcrypt.compare(password, row.password);
-                if (match) {
-                    req.session.users = {
-                        user_id: row.user_id,
-                        name: row.name,
-                        surname: row.surname,
-                    };
-                    console.log("Zalogowano pomyślnie:", name);
-                    return res.status(200).json({ message: "Zalogowano pomyślnie" });
-                } else {
-                    return res.status(401).json({ message: "Niepoprawne hasło" });
-                }
-            } catch (error) {
-                console.error("Błąd podczas weryfikacji hasła:", error);
-                return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
+            if (!row.is_approved) {
+                return res.status(403).json({ message: "Twoje konto nie zostało jeszcze zatwierdzone przez administratora." });
+            }
+            const match = await bcrypt.compare(password, row.password);
+            if (match) {
+                req.session.users = {
+                    user_id: row.user_id,
+                    name: row.name,
+                    surname: row.surname,
+                    role: row.role 
+                };
+                return res.status(200).json({ message: "Zalogowano pomyślnie" });
+            } else {
+                return res.status(401).json({ message: "Niepoprawne hasło" });
             }
         } else {
             return res.status(404).json({ message: "Użytkownik nie istnieje" });
@@ -407,10 +336,9 @@ app.post('/login', checkIfLogged, (req, res) => {
     }
 
     try {
-        const saltRounds = 10; // Liczba rund solenia
+        const saltRounds = 10; 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        const sql = `INSERT INTO users (name, surname, mail, login, password) VALUES (?, ?, ?, ?, ?)`;
+        const sql = `INSERT INTO users (name, surname, mail, login, password, is_approved) VALUES (?, ?, ?, ?, ?, 0)`;
         db.run(sql, [name, surname, email, login, hashedPassword], function (err) {
             if (err) {
                 console.error("SQL error:", err);
@@ -418,10 +346,42 @@ app.post('/login', checkIfLogged, (req, res) => {
             }
             res.json({ id: this.lastID });
         });
+        
     } catch (error) {
         console.error("Błąd hashowania hasła:", error);
         res.status(500).json({ error: "Wewnętrzny błąd serwera" });
     }
+});
+
+app.get('/pendingUsers', checkSession, checkAdminSession, (req, res) => {
+    const sql = `SELECT user_id, name, surname, mail FROM users WHERE is_approved = 0`;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error("Błąd podczas pobierania użytkowników:", err);
+            return res.status(500).json({ error: "Błąd serwera" });
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/approveUser', checkSession, checkAdminSession, (req, res) => {
+    console.log('Otrzymane dane:', req.body);
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ error: "ID użytkownika jest wymagane" });
+    }
+
+    const sql = `UPDATE users SET is_approved = 1 WHERE user_id = ?`;
+    db.run(sql, [userId], function (err) {
+        if (err) {
+            console.error("Błąd podczas zatwierdzania użytkownika:", err);
+            return res.status(500).json({ error: "Błąd serwera" });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Nie znaleziono użytkownika" });
+        }
+        res.json({ message: "Użytkownik został zatwierdzony" });
+    });
 });
 
 app.listen(port, () => {

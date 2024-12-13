@@ -10,9 +10,12 @@ import Statistics from './components/Statistics';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
 import NewPassword from './components/newPassword';
+import ApproveUser from './components/ApproveUser';
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
+
     return (
         <div className='App'>
             <Router>
@@ -27,7 +30,7 @@ function App() {
                     <Route path="/adoptions" exact element={<Adoptions />} />
                     <Route path="/forgotPassword" exact element={<ForgotPassword />} />
                     <Route path="/newPassword" exact element={<NewPassword />} />
-
+                    <Route path="/ApproveUser" exact element={<ApproveUser />} />
                 </Routes>
             </Router>
         </div>
