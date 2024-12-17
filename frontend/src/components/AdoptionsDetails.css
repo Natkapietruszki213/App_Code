@@ -1,0 +1,71 @@
+.adoptionDetails {
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #ddc4f5; 
+    box-sizing: border-box;
+}
+
+.adoption-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #6a329f;
+    border-radius: 15px;
+    background-color: #f8e8ff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin: 2rem;
+    width: 50%;
+    max-width: 600px;
+    box-sizing: border-box;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.dog-photo {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #6a329f;
+    margin-bottom: 1.5rem;
+}
+
+.adoption-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #321f70;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.adoption-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 1rem;
+    color: #4a4a4a;
+    width: 100%;
+}
+
+.adoption-details span {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.adoption-details span span{
+    border-bottom: none;
+    width: 50%;
+}
+
+.adoption-details label {
+    font-weight: bold;
+    color: #6a329f;
+}
+

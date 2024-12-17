@@ -215,6 +215,35 @@ app.get('/statistics', checkSession, (req, res) => {
 app.get('/adoptions',checkSession,(req,res) =>{
     res.send('Procesy adopcyjne');
 });
+app.get('/adoptions/:dog_id', checkSession, (req, res) => {
+    const { dog_id } = req.params;
+
+    const sql = `
+        SELECT 
+            a.adoption_id, 
+            a.form_date, 
+            a.ba_note, 
+            a.walks_amount, 
+            a.estimated_adoption_date,
+            d.name AS dog_name,
+            d.box AS dog_box
+        FROM adoptions a
+        JOIN dogs d ON a.dog_id = d.dog_id
+        WHERE a.dog_id = ?;
+    `;
+
+    db.get(sql, [dog_id], (err, row) => {
+        if (err) {
+            console.error("Błąd pobierania danych adopcyjnych:", err);
+            return res.status(500).json({ error: "Błąd serwera" });
+        }
+        if (!row) {
+            return res.status(404).json({ message: "Brak danych o procesie adopcji dla tego psa" });
+        }
+        res.json(row);
+    });
+});
+
 app.get('/home',checkSession,(req,res) =>{
     res.send('Procesy adopcyjne');
 });
