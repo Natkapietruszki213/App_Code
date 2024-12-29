@@ -16,6 +16,10 @@ const AdoptionDetails = () => {
         setActiveButton(buttonName);
         navigate(path);
     }
+    function GoBack() {
+        navigate('/adoptions');
+    }
+
 
     function logOut() {
         console.log('Wylogowanie rozpoczęte');
@@ -35,7 +39,28 @@ const AdoptionDetails = () => {
                 console.error('Error:', error);
             });
     }
-
+    useEffect(() => {
+        fetch('http://localhost:3000/checkSession', {
+            method: 'GET',
+            credentials: 'include',
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Błąd podczas sprawdzania sesji');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Sesja użytkownika:', data);
+                if (data.loggedIn && data.role) {
+                    setUserRole(data.role);
+                }
+            })
+            .catch(error => {
+                console.error('Błąd:', error);
+            });
+    }, []);
+    
     useEffect(() => {
         const fetchAdoptionData = async () => {
             try {
@@ -53,6 +78,7 @@ const AdoptionDetails = () => {
             } catch (err) {
                 console.error('Błąd pobierania danych adopcyjnych:', err);
                 setError('Nie udało się pobrać szczegółów adopcji.');
+                navigate('/login');
             }
         };
 
@@ -101,7 +127,7 @@ const AdoptionDetails = () => {
                             </span>
                             <span>
                                 <label>Opinia pracownika BA:</label>
-                                <span>{adoptionData.ba_note || "Brak notatki"}</span>
+                                <span>{adoptionData.ba_note || "Ankieta jeszcze nieomówiona"}</span>
                             </span>
                             <span>
                                 <label>Liczba odbytych spacerów:</label>
@@ -113,6 +139,7 @@ const AdoptionDetails = () => {
                                         ? new Date(adoptionData.estimated_adoption_date).toLocaleDateString()
                                         : "Nieznana"}</span>
                             </span>
+                            <div className='button_area'><button type='button' id='back_button' onClick={GoBack}>Powrót</button></div>
                         </div>
                     </>
                 )}

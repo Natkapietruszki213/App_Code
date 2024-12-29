@@ -69,3 +69,9 @@
     color: #6a329f;
 }
 
+.button_area{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}

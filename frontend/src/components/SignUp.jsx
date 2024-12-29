@@ -61,7 +61,7 @@ function SignUp() {
         });
           console.log(response);
         if (response.ok) {
-                alert(JSON.stringify("Konto zostało pomyślnie utworzone!"));
+                alert(JSON.stringify("Konto zostało pomyślnie utworzone! Poczekaj na akceptację przez lidera grupy."));
                 navigate('/login');
             } 
             else {

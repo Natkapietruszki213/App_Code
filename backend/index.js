@@ -9,10 +9,27 @@ const nodemailer = require('nodemailer')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt');
 
-
+app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+
+const multer = require('multer');
+const path = require('path');
+
+// Konfiguracja folderu na przesyłane pliki
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, '../frontend/src/assets'); // Folder, w którym będą zapisywane pliki
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Middleware `multer`
+const upload = multer({ storage });
 
 const corsOptions = {
     origin: 'http://localhost:5173',  
@@ -39,15 +56,16 @@ app.use(session({
 
 function checkIfLogged(req, res, next) {
     if (req.session && req.session.users && req.session.users.user_id) {
-        return res.status(403).json({ message: "Nie możesz odwiedzić tej strony, będąc zalogowanym." });
+        return res.status(403).json(
+            { message: "Nie możesz odwiedzić tej strony, będąc zalogowanym." });
     }
     next();
 }
 
 function checkSession(req, res, next) {
-    console.log('Sesja:', req.session);
     if (!req.session || !req.session.users || !req.session.users.user_id) {
-        return res.status(401).json({ message: 'Niezalogowany dostęp zabroniony' });
+        return res.status(401).json(
+            { message: 'Niezalogowany dostęp zabroniony' });
     }
     next();
 }
@@ -212,9 +230,23 @@ app.get('/statistics', checkSession, (req, res) => {
     });
 });
 
-app.get('/adoptions',checkSession,(req,res) =>{
-    res.send('Procesy adopcyjne');
+app.get('/adoptions', checkSession, (req, res) => {
+    const sql = `
+        SELECT a.dog_id, d.name AS dog_name
+        FROM adoptions a
+        JOIN dogs d ON a.dog_id = d.dog_id
+    `;
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Błąd bazy danych:', err.message);
+            return res.status(500).json({ error: 'Błąd serwera' });
+        }
+        res.json(rows);
+    });
 });
+
+
 app.get('/adoptions/:dog_id', checkSession, (req, res) => {
     const { dog_id } = req.params;
 
@@ -287,8 +319,55 @@ app.post('/newPassword', checkIfLogged, async (req, res) => {
     }
 });
 
+app.post('/dogs', checkSession, checkAdminSession, upload.single('image'), (req, res) => {
+    const { name, weight, age, box, arrived, work } = req.body;
+    const imagePath = req.file ? req.file.path : null; // Ścieżka do obrazu
+
+    const sql = `INSERT INTO dogs (name, weight, age, box, arrived, work, image_path) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [name, weight, age, box, arrived, work, imagePath], function (err) {
+        if (err) {
+            console.error('Błąd przy dodawaniu psa:', err);
+            return res.status(500).json({ error: 'Błąd serwera' });
+        }
+        res.status(201).json({ message: 'Pies został dodany', dog_id: this.lastID });
+    });
+});
+
+app.put('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
+    const { dog_id } = req.params;
+    const { name, weight, age, box, arrived, work } = req.body;
+
+    const sql = `UPDATE dogs SET name = ?, weight = ?, age = ?, box = ?, arrived = ?, work = ? WHERE dog_id = ?`;
+    db.run(sql, [name, weight, age, box, arrived, work, dog_id], function (err) {
+        if (err) {
+            console.error('Błąd przy edycji psa:', err);
+            return res.status(500).json({ error: 'Błąd serwera' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Nie znaleziono psa' });
+        }
+        res.json({ message: 'Dane psa zostały zaktualizowane' });
+    });
+});
+
+app.delete('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
+    const { dog_id } = req.params;
+
+    const sql = `DELETE FROM dogs WHERE dog_id = ?`;
+    db.run(sql, [dog_id], function (err) {
+        if (err) {
+            console.error('Błąd przy usuwaniu psa:', err);
+            return res.status(500).json({ error: 'Błąd serwera' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Nie znaleziono psa' });
+        }
+        res.json({ message: 'Pies został usunięty' });
+    });
+});
+
 app.get('/dogs', checkSession, (req, res) => {
-    const sql = 'SELECT dog_id, name, weight, age, box, arrived, work FROM dogs'; 
+    const sql = 'SELECT dog_id, name, weight, age, box, arrived, work, image_path FROM dogs'; 
     db.all(sql, [], (err, rows) => {
         if (err) {
             console.error('Błąd podczas wykonywania zapytania:', err.message);
@@ -357,7 +436,7 @@ app.post('/login', checkIfLogged, (req, res) => {
     });
 });
   
-  app.post('/signUp',checkIfLogged, async (req, res) => {
+app.post('/signUp',checkIfLogged, async (req, res) => {
     const { name, surname, email, login, password } = req.body;
 
     if (!name || !surname || !email || !login || !password) {
