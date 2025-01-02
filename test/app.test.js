@@ -8,8 +8,7 @@ describe('API Tests', () => {
     beforeAll(async () => {
         await new Promise((resolve, reject) => {
             db.serialize(() => {
-                // Tworzenie tabel
-                db.run('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, login TEXT NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, surname TEXT NOT NULL, mail TEXT NOT NULL, is_approved INTEGER NOT NULL DEFAULT 0, role TEXT NOT NULL, reset_token TEXT, reset_token_expiration DATETIME)', (err) => {
+                db.run('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, login TEXT NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, surname TEXT NOT NULL, mail TEXT NOT NULL, is_approved INTEGER NOT NULL DEFAULT 0, role TEXT DEFAULT `user`, reset_token TEXT, reset_token_expiration DATETIME)', (err) => {
                     if (err) reject(err);
                 });
 
@@ -21,7 +20,6 @@ describe('API Tests', () => {
                     if (err) reject(err);
                 });
 
-                // Dodawanie użytkownika testowego
                 bcrypt.hash('Nath', saltRounds, (err, hashedPassword) => {
                     if (err) reject(err);
                     db.run('INSERT INTO users (login, password, name, surname, mail, is_approved, role) VALUES (?, ?, ?, ?, ?, ?, ?)', 
@@ -30,7 +28,7 @@ describe('API Tests', () => {
             });
         });
 
-        // Mockowanie sesji w aplikacji
+        // Mockowanie sesji
         app.use((req, res, next) => {
             req.session = {
                 users: {
@@ -117,12 +115,22 @@ describe('API Tests', () => {
 
     // Test: Pobieranie listy psów
     it('should fetch all dogs', async () => {
-        const response = await request(app)
-            .get('/dogs')
-            .set('Cookie', 'connect.sid=mockSessionCookie');
+        // Dodanie testowego psa
+        await new Promise((resolve, reject) => {
+            db.run('INSERT INTO dogs (name, weight, age, box, arrived, work) VALUES (?, ?, ?, ?, ?, ?)', 
+                ['Buddy', 25, 4, 'A1', '2025-01-01', 'Therapy Dog'], (err) => {
+                    if (err) reject(err);
+                    resolve();
+                });
+        });
 
+        const response = await request(app)
+            .get('/dogs');
+
+        console.log('Response for fetching dogs:', response.body);
         expect(response.status).toBe(200);
         expect(response.body).toBeInstanceOf(Array);
+        expect(response.body.length).toBeGreaterThan(0);
     });
 
     // Test: Dodawanie psa
@@ -213,33 +221,26 @@ describe('API Tests', () => {
     });
 
 
-    it('should fetch all dogs', async () => {
-        // Dodanie testowego psa
-        await new Promise((resolve, reject) => {
-            db.run('INSERT INTO dogs (name, weight, age, box, arrived, work) VALUES (?, ?, ?, ?, ?, ?)', 
-                ['Buddy', 25, 4, 'A1', '2025-01-01', 'Therapy Dog'], (err) => {
-                    if (err) reject(err);
-                    resolve();
-                });
-        });
-
+    it('should add a new dog', async () => {
         const response = await request(app)
-            .get('/dogs')
-            .set('Cookie', 'connect.sid=mockSessionCookie');
+            .post('/dogs')
+            .set('Cookie', 'connect.sid=mockAdminSessionCookie')
+            .send({
+                name: 'Buddy',
+                weight: 25,
+                age: 4,
+                box: 'A1',
+                arrived: '2025-01-01',
+                work: 'Therapy Dog'
+            });
 
-        console.log('Response for fetching dogs:', response.body);
-        expect(response.status).toBe(200);
-        expect(response.body).toBeInstanceOf(Array);
-        expect(response.body.length).toBeGreaterThan(0);
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty('message', 'Pies został dodany');
     });
 
     afterAll(async () => {
         await new Promise((resolve) => {
-            db.serialize(() => {
-                db.run('DROP TABLE IF EXISTS users');
-                db.run('DROP TABLE IF EXISTS walk');
-                db.run('DROP TABLE IF EXISTS dogs', resolve);
-            });
+            db.close(resolve); // Zamknięcie połączenia z bazą danych
         });
     });
 });
