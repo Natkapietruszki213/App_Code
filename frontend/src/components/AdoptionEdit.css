@@ -1,0 +1,44 @@
+.edit-adoption{
+    width:100vw;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #ddc4f5;
+}
+.edit-adoption form{
+    height: 55vh;
+    width: 25vw;
+    font-size: 20px;
+    border: 2px solid #6a329f; 
+    border-radius: 10px; 
+    color: #4e2b7f;
+    background-color: #f8e8ff; 
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+.edit-adoption input{
+    width: 20vw;
+}
+.edit-adoption textarea{
+    width: 20vw;
+}
+.edit_buttons button{
+    margin: 2px;
+    height: 4vh;
+    width: 10vw;
+    font-size: 18px;
+    border-radius: 8px;
+    background-color: #4e2b7f; 
+    color: #ffffff;
+    border: none;
+}
+.edit_buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+

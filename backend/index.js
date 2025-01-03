@@ -229,6 +229,48 @@ app.get('/statistics', checkSession, (req, res) => {
         res.json(statistics);
     });
 });
+app.post('/adoptions', checkSession, checkAdminSession, (req, res) => {
+    const { dog_id, form_date, ba_note, walks_amount, estimated_adoption_date } = req.body;
+
+    if (!dog_id || !form_date || !ba_note || !walks_amount || !estimated_adoption_date) {
+        return res.status(400).json({ error: 'Wszystkie pola są wymagane!' });
+    }
+
+    const sql = `
+        INSERT INTO adoptions (dog_id, form_date, ba_note, walks_amount, estimated_adoption_date)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.run(sql, [dog_id, form_date, ba_note, walks_amount, estimated_adoption_date], function (err) {
+        if (err) {
+            console.error('Błąd przy dodawaniu procesu adopcyjnego:', err);
+            return res.status(500).json({ error: 'Błąd serwera' });
+        }
+        res.status(201).json({ message: 'Proces adopcyjny został dodany', adoption_id: this.lastID });
+    });
+});
+
+app.put('/adoptions/:dog_id', checkSession, checkAdminSession, (req, res) => {
+    const { dog_id } = req.params;
+    const { form_date, ba_note, walks_amount, estimated_adoption_date } = req.body;
+
+    const sql = `
+        UPDATE adoptions
+        SET form_date = ?, ba_note = ?, walks_amount = ?, estimated_adoption_date = ?
+        WHERE dog_id = ?
+    `;
+
+    db.run(sql, [form_date, ba_note, walks_amount, estimated_adoption_date, dog_id], function (err) {
+        if (err) {
+            console.error("Błąd podczas aktualizacji danych adopcyjnych:", err);
+            return res.status(500).json({ error: "Błąd serwera" });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Nie znaleziono procesu adopcyjnego" });
+        }
+        res.json({ message: "Proces adopcyjny zaktualizowany" });
+    });
+});
 
 app.get('/adoptions', checkSession, (req, res) => {
     const sql = `
@@ -351,7 +393,21 @@ app.put('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
         res.json({ message: 'Dane psa zostały zaktualizowane' });
     });
 });
+app.delete('/adoptions/:dog_id', checkSession, checkAdminSession, (req, res) => {
+    const { dog_id } = req.params;
 
+    const sql = `DELETE FROM adoptions WHERE dog_id = ?`;
+    db.run(sql, [dog_id], function (err) {
+        if (err) {
+            console.error('Błąd przy usuwaniu procesu adopcyjnego:', err);
+            return res.status(500).json({ error: 'Błąd serwera' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Nie znaleziono procesu adopcyjnego' });
+        }
+        res.json({ message: 'Proces adopcyjny został usunięty' });
+    });
+});
 app.delete('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
     const { dog_id } = req.params;
 

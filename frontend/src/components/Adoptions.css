@@ -44,40 +44,24 @@
     justify-content: center;
     padding: 20px;
 }
-#note{
-    width: 29vw;
-}
-.add_adoption_button, .exit_button {
-    height: 5vh;
-    width: 5vw;
-    margin: 2px;
-    font-size: 15px;
-    border-radius: 5px;
-    background-color: #6a329f; 
-    color: #ffffff;
-    border: none;
-}
-.add_adoption {
-    height: 5vh;
-    width: 15vw;
-    margin: 2px;
-    font-size: 15px;
-    border-radius: 5px;
-    background-color: #af85da; 
-    color: #ffffff;
-    border: none;
-}
-.form__adoptions_buttons {
+.dog-item{
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+}
+.delete_button, .edit_button {
     height: 4vh;
     width: 4vw;
     margin: 2px;
-    font-size: 14px;
+    font-size: 15px;
     border-radius: 5px;
-    background-color: #6a329f; 
+    background-color: #9a70c1; 
     color: #ffffff;
     border: none;
+}
+.changes_buttons{
+    display: flex;
+    flex-direction: row;
+    margin:10px;
 }
 
 

@@ -56,6 +56,25 @@ function Adoptions() {
         setActiveButton(buttonName);
         navigate(path);
     }
+    function handleDelete(dogId) {
+        if (window.confirm("Czy na pewno chcesz usunąć ten proces adopcyjny?")) {
+            fetch(`http://localhost:3000/adoptions/${dogId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Błąd podczas usuwania procesu adopcyjnego");
+                    }
+                    setDogs(dogs.filter(dog => dog.dog_id !== dogId)); // Aktualizacja listy psów
+                    alert("Proces adopcyjny został usunięty.");
+                })
+                .catch((error) => {
+                    console.error("Błąd:", error);
+                    alert("Nie udało się usunąć procesu adopcyjnego.");
+                });
+        }
+    }
 
     function logOut() {
         console.log('Wylogowanie rozpoczęte');
@@ -102,19 +121,34 @@ function Adoptions() {
                 <h2>Wybierz pieska, aby zobaczyć szczegóły adopcji:</h2>
                 <div className="dogs-list">
                     {dogs.length > 0 ? (
-                        dogs.map((dog) => (
+                    dogs.map((dog) => (
+                    <div key={dog.dog_id} className="dog-item">
+                        <button
+                            className="dog-button"
+                            onClick={() => navigate(`/adoptions/${dog.dog_id}`)}
+                        >
+                            {dog.dog_name}
+                        </button>
+                        <div className="changes_buttons">
                             <button
-                                key={dog.dog_id}
-                                className="dog-button"
-                                onClick={() => navigate(`/adoptions/${dog.dog_id}`)}
+                                className="edit_button"
+                                onClick={() => navigate(`/adoptions/edit/${dog.dog_id}`)}
                             >
-                                {dog.dog_name}
+                                Edytuj
                             </button>
-                        ))
-                    ) : (
-                        <p>Brak aktualnych procesów adopcyjnych.</p>
-                    )}
-                </div>
+                            <button
+                                className="delete_button"
+                                onClick={() => handleDelete(dog.dog_id)}
+                            >
+                                Usuń
+                            </button>
+                        </div>
+                    </div>
+                ))
+            ) : (
+        <p>Brak aktualnych procesów adopcyjnych.</p>
+    )}
+</div>
             </div>
         </div>
     );

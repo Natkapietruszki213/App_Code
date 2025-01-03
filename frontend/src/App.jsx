@@ -12,6 +12,7 @@ import ForgotPassword from './components/ForgotPassword';
 import NewPassword from './components/newPassword';
 import ApproveUser from './components/ApproveUser';
 import AdoptionDetails from './components/AdoptionDetails';
+import AdoptionEdit from './components/AdoptionEdit';
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
@@ -33,6 +34,8 @@ function App() {
                     <Route path="/newPassword" exact element={<NewPassword />} />
                     <Route path="/ApproveUser" exact element={<ApproveUser />} />
                     <Route path="/adoptions/:dog_id" exact element={<AdoptionDetails />} />
+                    <Route path="/adoptions/edit/:dog_id" exact element={<AdoptionEdit />} />
+
 
                 </Routes>
             </Router>
