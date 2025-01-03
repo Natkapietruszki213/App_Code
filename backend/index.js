@@ -13,7 +13,6 @@ app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
-
 const multer = require('multer');
 const path = require('path');
 
@@ -63,6 +62,7 @@ function checkIfLogged(req, res, next) {
 }
 
 function checkSession(req, res, next) {
+    console.log("Sesja w aplikacji:", req.session); // Dodaj logowanie sesji w aplikacji
     if (!req.session || !req.session.users || !req.session.users.user_id) {
         return res.status(401).json(
             { message: 'Niezalogowany dostęp zabroniony' });
@@ -303,6 +303,8 @@ app.post('/newPassword', checkIfLogged, async (req, res) => {
                         user_id: row.user_id,
                         name: row.name,
                         surname: row.surname,
+                        role: row.role 
+                        
                     };
                     return res.status(200).json({ message: "Zalogowano pomyślnie" });
                 } else {
@@ -492,7 +494,10 @@ app.post('/approveUser', checkSession, checkAdminSession, (req, res) => {
     });
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+if (require.main === module) {
+    const port = 3000;
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`);
+    });
+}
 module.exports = app;
