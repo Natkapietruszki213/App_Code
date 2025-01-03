@@ -8,6 +8,14 @@ function Adoptions() {
     const [activeButton, setActiveButton] = useState('');
     const [userRole, setUserRole] = useState(null);
     const [dogs, setDogs] = useState([]); 
+    const [isAdding, setIsAdding] = useState(false);
+    const [newAdoption, setNewAdoption] = useState({
+        dog_id: '',
+        form_date: '',
+        ba_note: '',
+        walks_amount: '',
+        estimated_adoption_date: ''
+    });
 
     useEffect(() => {
         fetch('http://localhost:3000/checkSession', {
@@ -94,7 +102,32 @@ function Adoptions() {
                 console.error('Error:', error);
             });
     }
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewAdoption({ ...newAdoption, [name]: value });
+    };
 
+    const handleAddAdoption = () => {
+        fetch('http://localhost:3000/adoptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(newAdoption),
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Błąd podczas dodawania procesu adopcyjnego');
+                return response.json();
+            })
+            .then(data => {
+                alert('Proces adopcyjny został dodany');
+                setDogs([...dogs, { dog_name: newAdoption.dog_name }]);
+                setIsAdding(false); // Zamknij formularz po dodaniu
+            })
+            .catch(error => {
+                console.error('Błąd:', error);
+                alert('Nie udało się dodać procesu adopcyjnego.');
+            });
+    };
     return (
         <div className="adoptions">
             <div className="menu">
@@ -118,11 +151,65 @@ function Adoptions() {
                 <button className="menu_buttons" id="log_out_button" onClick={logOut}>Wyloguj</button>
             </div>
             <div className="page">
+                {isAdding ? (
+                        <div className="add-adoption-form">
+                            <label>
+                                Imię Psa:
+                                <input
+                                    type="text"
+                                    name="dog_name"
+                                    value={newAdoption.dog_name}
+                                    onChange={handleInputChange}
+                                />
+                            </label>
+                            <label>
+                                Data złożenia ankiety przedadopcyjnej:
+                                <input
+                                    type="date"
+                                    name="form_date"
+                                    value={newAdoption.form_date}
+                                    onChange={handleInputChange}
+                                />
+                            </label>
+                            <label>
+                                Opinia BA:
+                                <textarea
+                                    name="ba_note"
+                                    value={newAdoption.ba_note}
+                                    onChange={handleInputChange}
+                                />
+                            </label>
+                            <label>
+                                Liczba odbytych spacerów przedadopcyjnych:
+                                <input
+                                    type="number"
+                                    name="walks_amount"
+                                    value={newAdoption.walks_amount}
+                                    onChange={handleInputChange}
+                                />
+                            </label>
+                            <label>
+                                Przewidywana data adopcji:
+                                <input
+                                    type="date"
+                                    name="estimated_adoption_date"
+                                    value={newAdoption.estimated_adoption_date}
+                                    onChange={handleInputChange}
+                                />
+                            </label>
+                            <div class="add_form_buttons">
+                                <button className="save_button" onClick={handleAddAdoption}>Dodaj proces adopcyjny</button>
+                                <button className="cancel_button" onClick={() => setIsAdding(false)}>Anuluj</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button className="add_button" onClick={() => setIsAdding(true)}>Dodaj proces adopcyjny</button>
+                    )}
                 <h2>Wybierz pieska, aby zobaczyć szczegóły adopcji:</h2>
                 <div className="dogs-list">
                     {dogs.length > 0 ? (
                     dogs.map((dog) => (
-                    <div key={dog.dog_id} className="dog-item">
+                    <div key={dog.dog_id} className="dog-item2">
                         <button
                             className="dog-button"
                             onClick={() => navigate(`/adoptions/${dog.dog_id}`)}

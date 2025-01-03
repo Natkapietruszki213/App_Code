@@ -230,23 +230,36 @@ app.get('/statistics', checkSession, (req, res) => {
     });
 });
 app.post('/adoptions', checkSession, checkAdminSession, (req, res) => {
-    const { dog_id, form_date, ba_note, walks_amount, estimated_adoption_date } = req.body;
+    const { dog_name, form_date, ba_note, walks_amount, estimated_adoption_date } = req.body;
 
-    if (!dog_id || !form_date || !ba_note || !walks_amount || !estimated_adoption_date) {
+    if (!dog_name || !form_date || !ba_note || !walks_amount || !estimated_adoption_date) {
         return res.status(400).json({ error: 'Wszystkie pola są wymagane!' });
     }
 
-    const sql = `
+    const getDogIdSQL = 'SELECT dog_id FROM dogs WHERE name = ?';
+    const insertAdoptionSQL = `
         INSERT INTO adoptions (dog_id, form_date, ba_note, walks_amount, estimated_adoption_date)
         VALUES (?, ?, ?, ?, ?)
     `;
 
-    db.run(sql, [dog_id, form_date, ba_note, walks_amount, estimated_adoption_date], function (err) {
+    db.get(getDogIdSQL, [dog_name], (err, row) => {
         if (err) {
-            console.error('Błąd przy dodawaniu procesu adopcyjnego:', err);
+            console.error('Błąd przy wyszukiwaniu ID psa:', err);
             return res.status(500).json({ error: 'Błąd serwera' });
         }
-        res.status(201).json({ message: 'Proces adopcyjny został dodany', adoption_id: this.lastID });
+        if (!row) {
+            return res.status(404).json({ error: 'Nie znaleziono psa o podanym imieniu' });
+        }
+
+        const dog_id = row.dog_id;
+
+        db.run(insertAdoptionSQL, [dog_id, form_date, ba_note, walks_amount, estimated_adoption_date], function (err) {
+            if (err) {
+                console.error('Błąd przy dodawaniu procesu adopcyjnego:', err);
+                return res.status(500).json({ error: 'Błąd serwera' });
+            }
+            res.status(201).json({ message: 'Proces adopcyjny został dodany', adoption_id: this.lastID });
+        });
     });
 });
 

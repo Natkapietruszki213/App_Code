@@ -68,7 +68,7 @@ function AdoptionEdit() {
     return (
         <div className="edit-adoption">
             <h2>Edytuj proces adopcyjny</h2>
-            <form onSubmit={handleSubmit}>
+            <form  className="edit-adoption-form" onSubmit={handleSubmit}>
                 <label>
                     Data złożenia ankiety przedadopcyjnej:
                     <input
