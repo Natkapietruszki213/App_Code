@@ -50,8 +50,11 @@ tbody td {
     font-size: 16px;
     color: #4e2b7f;
 }
+button:hover {
+    background-color: #6a329f;
+}
 
-#acceptButton {
+.users_activity_button{
     padding: 8px 15px;
     font-size: 14px;
     border: none;
@@ -60,24 +63,5 @@ tbody td {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s;
-}
-
-button:hover {
-    background-color: #6a329f;
-}
-
-@media (max-width: 768px) {
-    table {
-        font-size: 14px;
-    }
-
-    .menu_buttons {
-        font-size: 16px;
-        width: 30%;
-    }
-
-    button {
-        font-size: 12px;
-        padding: 5px 10px;
-    }
+    margin: 5px;
 }

@@ -542,6 +542,25 @@ app.get('/pendingUsers', checkSession, checkAdminSession, (req, res) => {
         res.json(rows);
     });
 });
+app.delete('/rejectUser', checkSession, checkAdminSession, (req, res) => {
+    console.log('Otrzymane dane do odrzucenia:', req.body);
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ error: "ID użytkownika jest wymagane" });
+    }
+
+    const sql = `DELETE FROM users WHERE user_id = ? AND is_approved = 0`;
+    db.run(sql, [userId], function (err) {
+        if (err) {
+            console.error("Błąd podczas usuwania użytkownika:", err);
+            return res.status(500).json({ error: "Błąd serwera" });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Nie znaleziono użytkownika" });
+        }
+        res.json({ message: "Użytkownik został usunięty" });
+    });
+});
 
 app.post('/approveUser', checkSession, checkAdminSession, (req, res) => {
     console.log('Otrzymane dane:', req.body);

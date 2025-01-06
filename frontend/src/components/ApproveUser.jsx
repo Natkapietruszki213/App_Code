@@ -103,6 +103,31 @@ function ApproveUser() {
                 alert('Nie udało się zatwierdzić użytkownika');
             });
     }
+    function rejectUser(userId) {
+        fetch('http://localhost:3000/rejectUser', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ userId })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Błąd podczas odrzucania użytkownika');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Sukces:', data);
+                alert('Użytkownik został odrzucony!');
+                setPendingUsers(prevUsers => prevUsers.filter(user => user.user_id !== userId));
+            })
+            .catch(error => {
+                console.error('Błąd:', error);
+                alert('Nie udało się odrzucić użytkownika');
+            });
+    }
 
     return (
         <div className="home">
@@ -147,7 +172,8 @@ function ApproveUser() {
                                     <td>{user.surname}</td>
                                     <td>{user.mail}</td>
                                     <td>
-                                        <button id='acceptButton' onClick={() => approveUser(user.user_id)}>Zatwierdź</button>
+                                        <button className="users_activity_button" id='acceptButton' onClick={() => approveUser(user.user_id)}>Zatwierdź</button>
+                                        <button className="users_activity_button" id='rejectButton' onClick={() => rejectUser(user.user_id)}>Odrzuć</button>
                                     </td>
                                 </tr>
                             ))}
