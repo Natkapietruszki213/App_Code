@@ -35,39 +35,49 @@ function SignUp() {
     function GoBack(){
         navigate('/login');}
 
-    const validate = async (e) => {
-        e.preventDefault();
-
-        if (!name || !surname || !login || !password || !email ) {
-            alert("Wypełnij wszystkie pola!");
-            return;
-        }
-
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(email)) {
-            alert("Wprowadź poprawny adres e-mail.");
-            return;
-        }
-
-        const response = await fetch('http://localhost:3000/signUp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-            name: name,
-            surname: surname,
-            email: email,
-            login: login,
-            password: password})
-        });
-          console.log(response);
-        if (response.ok) {
-                alert(JSON.stringify("Konto zostało pomyślnie utworzone! Poczekaj na akceptację przez lidera grupy."));
-                navigate('/login');
-            } 
-            else {
-                alert(JSON.stringify("Wystąpił błąd."));
+        const validate = async (e) => {
+            e.preventDefault();
+        
+            if (!name || !surname || !login || !password || !email) {
+                alert("Wypełnij wszystkie pola!");
+                return;
             }
-        };
+        
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert("Wprowadź poprawny adres e-mail.");
+                return;
+            }
+        
+            try {
+                const response = await fetch('http://localhost:3000/signUp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        surname: surname,
+                        email: email,
+                        login: login,
+                        password: password
+                    })
+                });
+        
+                if (response.ok) {
+                    alert("Konto zostało pomyślnie utworzone! Poczekaj na akceptację przez lidera grupy.");
+                    navigate('/login');
+                } else {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        alert(errorData.error);
+                    } else {
+                        alert("Wystąpił błąd.");
+                    }
+                }
+            } catch (error) {
+                console.error("Błąd podczas rejestracji:", error);
+                alert("Wystąpił błąd połączenia z serwerem.");
+            }
+        };        
     
     return (
         <div className="App">

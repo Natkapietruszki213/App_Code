@@ -505,7 +505,7 @@ app.post('/login', checkIfLogged, (req, res) => {
     });
 });
   
-app.post('/signUp',checkIfLogged, async (req, res) => {
+app.post('/signUp', checkIfLogged, async (req, res) => {
     const { name, surname, email, login, password } = req.body;
 
     if (!name || !surname || !email || !login || !password) {
@@ -513,19 +513,43 @@ app.post('/signUp',checkIfLogged, async (req, res) => {
     }
 
     try {
-        const saltRounds = 10; 
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        const sql = `INSERT INTO users (name, surname, mail, login, password, is_approved) VALUES (?, ?, ?, ?, ?, 0)`;
-        db.run(sql, [name, surname, email, login, hashedPassword], function (err) {
+        // Sprawdzenie, czy login lub email już istnieje
+        const checkQuery = `SELECT * FROM users WHERE login = ? OR mail = ?`;
+        db.get(checkQuery, [login, email], (err, row) => {
             if (err) {
                 console.error("SQL error:", err);
-                return res.status(400).json({ error: err.message });
+                return res.status(500).json({ error: 'Błąd podczas sprawdzania użytkownika.' });
             }
-            res.json({ id: this.lastID });
+            if (row) {
+                if (row.login === login) {
+                    return res.status(400).json({ error: 'Login już istnieje!' });
+                }
+                if (row.mail === email) {
+                    return res.status(400).json({ error: 'E-mail już istnieje!' });
+                }
+            }
+
+            // Haszowanie hasła
+            const saltRounds = 10;
+            bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
+                if (hashErr) {
+                    console.error("Błąd hashowania hasła:", hashErr);
+                    return res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+                }
+
+                // Wstawianie użytkownika
+                const sql = `INSERT INTO users (name, surname, mail, login, password, is_approved) VALUES (?, ?, ?, ?, ?, 0)`;
+                db.run(sql, [name, surname, email, login, hashedPassword], function (insertErr) {
+                    if (insertErr) {
+                        console.error("SQL error:", insertErr);
+                        return res.status(400).json({ error: 'Błąd podczas dodawania użytkownika.' });
+                    }
+                    res.json({ id: this.lastID });
+                });
+            });
         });
-        
     } catch (error) {
-        console.error("Błąd hashowania hasła:", error);
+        console.error("Błąd serwera:", error);
         res.status(500).json({ error: "Wewnętrzny błąd serwera" });
     }
 });

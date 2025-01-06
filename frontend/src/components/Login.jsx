@@ -18,14 +18,11 @@ function Login() {
         .then(response => response.json())
         .then(data => {
             if (data.loggedIn) {
-                navigate('/home'); // Przekierowanie zalogowanego użytkownika
-            } else {
-                setLoading(false); // Jeśli niezalogowany, zakończ ładowanie
+                navigate('/home'); 
             }
         })
         .catch(error => {
             console.error("Błąd podczas sprawdzania sesji:", error);
-            setLoading(false); // Pozwól użytkownikowi pozostać na stronie
         });
     }, [navigate]);
 
@@ -74,11 +71,7 @@ function Login() {
     const handleForgotPasswordClick = () => {
         navigate('/forgotPassword');
     };
-
-    if (loading) {
-        return <div>Ładowanie...</div>; // Ekran ładowania
-    }
-
+    
     return (
         <div className="App">
             <div className="header_log">
