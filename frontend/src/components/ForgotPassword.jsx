@@ -60,7 +60,7 @@ function ForgotPassword() {
     };
 
     return (
-        <div className="App">
+        <div className=".page_forget_password">
             <div className="header_log">
                 <img src={logo} alt="logo" id="logo_login" />
             </div>

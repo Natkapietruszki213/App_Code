@@ -343,33 +343,31 @@ app.post('/newPassword', checkIfLogged, async (req, res) => {
     }
 
     try {
-        db.get('SELECT * FROM users WHERE login = ?', [name], async (err, row) => {
+        // Znalezienie użytkownika na podstawie tokenu
+        db.get('SELECT * FROM users WHERE reset_token = ? AND reset_token_expiration > ?', [token, new Date()], async (err, row) => {
             if (err) {
                 console.error("Błąd bazy danych:", err);
                 return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
             }
-            if (row) {
-                if (!row.is_approved) {
-                    return res.status(403).json({ message: "Twoje konto nie zostało jeszcze zatwierdzone przez administratora." });
-                }
-                const match = await bcrypt.compare(password, row.password);
-                if (match) {
-                    req.session.users = {
-                        user_id: row.user_id,
-                        name: row.name,
-                        surname: row.surname,
-                        role: row.role 
-                        
-                    };
-                    return res.status(200).json({ message: "Zalogowano pomyślnie" });
-                } else {
-                    return res.status(401).json({ message: "Niepoprawne hasło" });
-                }
-            } else {
-                return res.status(404).json({ message: "Użytkownik nie istnieje" });
+
+            if (!row) {
+                return res.status(404).json({ error: "Nieprawidłowy lub wygasły token" });
             }
+
+            // Hashowanie nowego hasła
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+            // Aktualizacja hasła w bazie danych
+            db.run('UPDATE users SET password = ?, reset_token = NULL, reset_token_expiration = NULL WHERE user_id = ?', [hashedPassword, row.user_id], (err) => {
+                if (err) {
+                    console.error("Błąd aktualizacji hasła:", err);
+                    return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
+                }
+
+                res.status(200).json({ message: "Hasło zostało zmienione!" });
+            });
         });
-        
     } catch (error) {
         console.error("Błąd podczas zmiany hasła:", error);
         res.status(500).json({ error: "Wewnętrzny błąd serwera" });
