@@ -34,9 +34,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const corsOptions = {
-    origin: 'http://localhost:5173',  
-    credentials: true,  // Umożliwia wysyłanie credentialek, takich jak ciasteczka i nagłówki autoryzacyjne
-    optionsSuccessStatus: 200 // niektóre przeglądarki (np. IE11, różne smartfony) wymagają tego ustawienia
+    origin: (origin, callback) => {
+        const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Blocked by CORS'));
+        }
+    },
+    credentials: true,
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
