@@ -6,7 +6,6 @@ import logo from "../assets/logo.jpg";
 function Login() {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(true); // Stan ładowania
     const navigate = useNavigate();
 
     // Sprawdzenie sesji użytkownika na starcie
