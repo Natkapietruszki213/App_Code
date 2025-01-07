@@ -3,6 +3,17 @@ const app = require('../backend/index');
 const db = require('../backend/database');
 const bcrypt = require('bcrypt');
 
+// Add nodemailer mock
+jest.mock('nodemailer');
+const nodemailer = require('nodemailer');
+const mockSendMail = jest.fn().mockImplementation((mailOptions, callback) => {
+    callback(null, { response: 'Success' });
+});
+const mockTransporter = {
+    sendMail: mockSendMail,
+};
+nodemailer.createTransport.mockReturnValue(mockTransporter);
+
 describe('API Tests', () => {
 
   beforeAll((done) => {
@@ -73,6 +84,7 @@ describe('API Tests', () => {
       expect(res.statusCode).toBe(201);
       expect(res.body.message).toBe('Pies został dodany');
     });
+  });
 
   describe('Adoptions API', () => {
     it('should return all adoptions for an admin', async () => {
@@ -111,17 +123,29 @@ describe('API Tests', () => {
   });
 
   describe('Forgot Password', () => {
+    beforeEach(() => {
+        // Clear mock calls before each test
+        mockSendMail.mockClear();
+    });
+
     it('should return error if email does not exist', async () => {
-      const res = await request(app).post('/forgotPassword').send({ email: 'aaaaa@example.com' });
-      expect(res.statusCode).toBe(404);
-      expect(res.body.message).toBe('Użytkownik nie istnieje');
+        const res = await request(app).post('/forgotPassword').send({ email: 'aaaaa@example.com' });
+        expect(res.statusCode).toBe(404);
+        expect(res.body.message).toBe('Użytkownik nie istnieje');
+        expect(mockSendMail).not.toHaveBeenCalled();
     });
 
     it('should send reset email for existing user', async () => {
-      const res = await request(app).post('/forgotPassword').send({ email: 'testowy@testowymail.pl' });
-      expect(res.statusCode).toBe(200);
-      expect(res.body.message).toBe('E-mail z linkiem resetującym został wysłany');
+        const res = await request(app).post('/forgotPassword').send({ email: 'testowy@testowymail.pl' });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.message).toBe('E-mail z linkiem resetującym został wysłany');
+        expect(mockSendMail).toHaveBeenCalledTimes(1);
+        
+        // Verify email content
+        const emailCall = mockSendMail.mock.calls[0][0];
+        expect(emailCall.to).toBe('testowy@testowymail.pl');
+        expect(emailCall.subject).toBe('Resetowanie hasła');
     });
   });
-});
+
 });
