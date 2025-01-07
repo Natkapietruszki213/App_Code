@@ -22,8 +22,11 @@ const storage = multer.diskStorage({
         cb(null, '../frontend/src/assets'); // Folder, w którym będą zapisywane pliki
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        const dogName = req.body.name ? req.body.name : 'unknown_dog'; // Pobierz imię psa z body requestu
+        const sanitizedDogName = dogName.replace(/[^a-zA-Z0-9_-]/g, ''); // Zabezpieczenie przed niedozwolonymi znakami w nazwie pliku
+        const extname = path.extname(file.originalname); // Rozszerzenie pliku (np. .jpg, .png)
+        const fileName = `${sanitizedDogName}${extname}`; // Nazwa pliku oparta na imieniu psa
+        cb(null, fileName); // Ustaw nazwę pliku
     }
 });
 
@@ -387,6 +390,7 @@ app.post('/dogs', checkSession, checkAdminSession, upload.single('image'), (req,
         res.status(201).json({ message: 'Pies został dodany', dog_id: this.lastID });
     });
 });
+
 
 app.put('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
     const { dog_id } = req.params;

@@ -22,13 +22,10 @@ function SignUp() {
         .then(data => {
             if (data.loggedIn) {
                 navigate('/home'); // Przekierowanie zalogowanego użytkownika
-            } else {
-                setLoading(false); // Jeśli niezalogowany, zakończ ładowanie
-            }
+            } 
         })
         .catch(error => {
             console.error("Błąd podczas sprawdzania sesji:", error);
-            setLoading(false); // Pozwól użytkownikowi pozostać na stronie
         });
     }, [navigate]);
 
