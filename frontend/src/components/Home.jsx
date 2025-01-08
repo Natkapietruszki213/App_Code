@@ -21,6 +21,11 @@ function Home() {
     });
     const handleFormSubmit = (e) => {
         e.preventDefault();
+
+        if (!dogData.name || !dogData.weight || !dogData.age || !dogData.box || !dogData.arrived || !dogData.work) {
+            alert("Wszystkie pola są wymagane!");
+            return;
+        }
     
         const formData = new FormData();
         formData.append('name', dogData.name);
@@ -30,7 +35,7 @@ function Home() {
         formData.append('arrived', dogData.arrived);
         formData.append('work', dogData.work);
         if (dogData.image) {
-            formData.append('image', dogData.image); // Dodaj obraz
+            formData.append('image', dogData.image);
         }
     
         const method = editingDog ? 'PUT' : 'POST';
@@ -245,6 +250,13 @@ function Home() {
                             placeholder="Nr boksu"
                             value={dogData.box}
                             onChange={(e) => setDogData({ ...dogData, box: e.target.value })}
+                            required
+                        />
+                        Przyjęty: <input
+                            type="date"
+                            placeholder="Data przyjęcia"
+                            value={dogData.arrived}
+                            onChange={(e) => setDogData({ ...dogData, arrived: e.target.value })}
                             required
                         />
                         Uwagi: <textarea
