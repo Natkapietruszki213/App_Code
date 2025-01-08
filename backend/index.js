@@ -242,7 +242,7 @@ app.get('/statistics', checkSession, (req, res) => {
 app.post('/adoptions', checkSession, checkAdminSession, (req, res) => {
     const { dog_name, form_date, ba_note, walks_amount, estimated_adoption_date } = req.body;
 
-    if (!dog_name || !form_date || !ba_note || !walks_amount || !estimated_adoption_date) {
+    if (!dog_name || !form_date || !walks_amount) {
         return res.status(400).json({ error: 'Wszystkie pola są wymagane!' });
     }
 
@@ -399,12 +399,18 @@ app.post('/dogs', checkSession, checkAdminSession, upload.single('image'), (req,
 });
 
 
-app.put('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
+app.put('/dogs/:dog_id', checkSession, checkAdminSession, upload.single('image'), (req, res) => {
     const { dog_id } = req.params;
     const { name, weight, age, box, arrived, work } = req.body;
 
-    const sql = `UPDATE dogs SET name = ?, weight = ?, age = ?, box = ?, arrived = ?, work = ? WHERE dog_id = ?`;
-    db.run(sql, [name, weight, age, box, arrived, work, dog_id], function (err) {
+    if (!name || !weight || !age || !box || !arrived || !work) {
+        return res.status(400).json({ error: 'Wszystkie pola są wymagane!' });
+    }
+
+    const imagePath = req.file ? req.file.path : null;
+
+    const sql = `UPDATE dogs SET name = ?, weight = ?, age = ?, box = ?, arrived = ?, work = ?, image_path = ? WHERE dog_id = ?`;
+    db.run(sql, [name, weight, age, box, arrived, work, imagePath, dog_id], function (err) {
         if (err) {
             console.error('Błąd przy edycji psa:', err);
             return res.status(500).json({ error: 'Błąd serwera' });
@@ -415,6 +421,7 @@ app.put('/dogs/:dog_id', checkSession, checkAdminSession, (req, res) => {
         res.json({ message: 'Dane psa zostały zaktualizowane' });
     });
 });
+
 app.delete('/adoptions/:dog_id', checkSession, checkAdminSession, (req, res) => {
     const { dog_id } = req.params;
 
